@@ -1,0 +1,29 @@
+<div class="container">
+  <app-loader [isLoading]="isLoading" size="1.5"></app-loader>
+  <div [hidden]="isLoading">
+    <mat-form-field>
+      <ngx-mat-file-input [formControl]="file" placeholder="JSON Marches" [accept]="'.json'"></ngx-mat-file-input>
+      <mat-icon matSuffix>file</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field *ngIf="data">
+      <mat-label translate>Choose a Line</mat-label>
+      <mat-select [(value)]="selectedLine">
+        <mat-option *ngFor="let lineName of linesName" value="{{ lineName }}">
+          {{ lineName }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div *ngIf="selectedLine" class="chart">
+      <canvas
+        baseChart
+        class="chart"
+        [chartType]="'line'"
+        [datasets]="datasets"
+        [options]="options"
+        [plugins]="plugins"
+      ></canvas>
+      <mat-slider style="width: 100%" (input)="onInputRange($event)" min="minTime" max="maxTime"></mat-slider>
+    </div>
+  </div>
+</div>
