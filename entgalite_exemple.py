@@ -91,9 +91,14 @@ if __name__ == '__main__':
     conf = pysw.config.default
 
     # pour une connexion à distance, sinon la config par défaut
-    #pysw.config.default.root_dir = r"xxx"
-    #conf.server_name_or_ip = "xx" # default = localhost
-    #conf.port_sim = 10001 # cf. admin
+    #pysw.config.default.root_dir = r"xxx" # On verra ensemble
+    # en externe (hors masa): "46.218.153.46"
+    # en interne (dans masa): "172.19.2.91"
+    # default = localhost    
+    conf.server_name_or_ip = "172.19.2.91" 
+
+    conf.port_sim = 16276 # cf. admin pour session "test ENTGalite"
+    #conf.port_timeline = 16279 # port_sim + 3
 
     # la base de donnée contenue dans l'otpak est accessible
     # comme un module python
