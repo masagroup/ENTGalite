@@ -13,6 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HomeRoutingModule } from './home-routing.module';
 import { HomeComponent } from './home.component';
 import { HomeService } from './home.service';
+import { SocketIoService } from './socket-io.service';
 @NgModule({
   imports: [
     CommonModule,
@@ -29,6 +30,6 @@ import { HomeService } from './home.service';
     HomeRoutingModule
   ],
   declarations: [HomeComponent],
-  providers: [HomeService]
+  providers: [HomeService, SocketIoService]
 })
 export class HomeModule {}

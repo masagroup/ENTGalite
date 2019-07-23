@@ -42,7 +42,7 @@
     "plotly.js-dist": "^1.48.3",
     "protobufjs": "^6.8.8",
     "rxjs": "^6.5.2",
-    "socket.io": "^2.2.0",
+    "socket.io-client": "^2.2.0",
     "zone.js": "~0.9.1"
   },
   "devDependencies": {
@@ -57,7 +57,7 @@
     "@types/jasminewd2": "^2.0.6",
     "@types/node": "^12.6.2",
     "@types/plotly.js": "^1.44.9",
-    "@types/socket.io": "^2.1.2",
+    "@types/socket.io-client": "^1.4.32",
     "chartjs-plugin-datalabels": "^0.6.0",
     "codelyzer": "^5.1.0",
     "htmlhint": "^0.11.0",
