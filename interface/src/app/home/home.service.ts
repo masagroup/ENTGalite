@@ -72,7 +72,7 @@ export class HomeService {
     return color;
   }
 
-  getInitialTraces(data: MarchesByLines, selectedLine: string) {
+  getInitialTraces(data: MarchesByLines, selectedLine: string, color: string) {
     const date = this.parseDateTime(data['date_time']);
     const line = data.lines.find((x: Line) => x.line_name === selectedLine);
     const traces: any[] = [];
@@ -83,7 +83,6 @@ export class HomeService {
     let maxTime: number;
     let minStation: number;
     let maxStation: number;
-    let color = 0;
     line.marches.forEach((marche: Marche) => {
       const stopPoints = marche.stop_points;
       if (marchNames.includes(marche.marche_name)) {
@@ -134,7 +133,7 @@ export class HomeService {
         label: marche.marche_name,
         data: trace,
         showLine: true,
-        borderColor: colorList[color],
+        borderColor: color,
         pointRadius: 0,
         lineTension: 0,
         borderDash: [10, 5],
@@ -144,14 +143,6 @@ export class HomeService {
     });
     traces.sort((a: any, b: any) => {
       return a.data[0].x - b.data[0].x;
-    });
-    color = 0;
-    traces.forEach(element => {
-      element.borderColor = colorList[color];
-      color += 1;
-      if (color === colorList.length) {
-        color = 0;
-      }
     });
     return { traces, stations, minTime, maxTime, minStation, maxStation };
   }

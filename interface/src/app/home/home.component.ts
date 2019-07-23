@@ -7,6 +7,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.service';
 import * as Chart from 'chart.js';
 Chart.defaults.global.elements.line.fill = false;
+const colorList = ['#ffff00', '#008000', '#f23320', '#1d1cf2', '#4ef2f5', '#db59f5', '#0000'];
 
 function line_intersect(
   x1: number,
@@ -47,6 +48,7 @@ export class HomeComponent implements OnInit {
   intersect: { datasetIndex: number; dataIndex: number }[] = [];
   _selectedLine = '';
   dateTime: Date;
+  colorIndex = 0;
   options: any;
   datasets: any[];
   maxStation: number;
@@ -83,7 +85,12 @@ export class HomeComponent implements OnInit {
       const { traces, stations, minTime, maxTime, minStation, maxStation } = this.homeService.getInitialTraces(
         this.data,
         lineName,
+        colorList[this.colorIndex],
       );
+      this.colorIndex += 1;
+      if (this.colorIndex === colorList.length - 1) {
+        this.colorIndex = 0;
+      }
       this.datasets = this.datasets.concat(traces);
       if (this.chart.options.plugins.zoom.pan.rangeMax.x < maxTime) {
         this.chart.options.plugins.zoom.pan.rangeMax.x = maxTime;
@@ -97,9 +104,11 @@ export class HomeComponent implements OnInit {
       if (this.chart.options.plugins.zoom.zoom.rangeMin.x < minTime) {
         this.chart.options.plugins.zoom.zoom.rangeMax.x = minTime;
       }
-      console.log(this.datasets, traces);
       this.chart.update();
     } else {
+      if (this.colorIndex === colorList.length - 1) {
+        this.colorIndex = 0;
+      }
       this.datasets.forEach((element, index) => {
         if (element.selectedLine === lineName) {
           this.intersect = this.intersect.filter((x) => x.dataIndex !== index);
@@ -173,8 +182,10 @@ export class HomeComponent implements OnInit {
     this._selectedLine = selectedLine;
     const { traces, stations, minTime, maxTime, minStation, maxStation } = this.homeService.getInitialTraces(
       this.data,
-      this._selectedLine
+      this._selectedLine,
+      colorList[this.colorIndex]
     );
+    this.colorIndex += 1;
     this.minTime = minTime;
     this.maxTime = maxTime;
     this.maxStation = maxStation;
