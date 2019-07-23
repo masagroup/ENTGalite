@@ -14,3 +14,9 @@ declare interface Date {
   getUTCTime(): string;
   pad(number: number): string;
 }
+
+interface Window {
+  eel: any;
+}
+
+declare var window: Window;

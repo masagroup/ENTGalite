@@ -5,7 +5,6 @@ import { BaseChartDirective } from 'ng2-charts';
 // @ts-ignore
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.service';
-import { SocketIoService } from './socket-io.service';
 import * as Chart from 'chart.js';
 Chart.defaults.global.elements.line.fill = false;
 
@@ -57,7 +56,7 @@ export class HomeComponent implements OnInit {
   file: FormControl = new FormControl([]);
   @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
 
-  constructor(private homeService: HomeService, private socketIoService: SocketIoService) {}
+  constructor(private homeService: HomeService) {}
 
   ngOnInit() {
     this.file.valueChanges.subscribe((files: any) => {
