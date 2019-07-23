@@ -8,21 +8,12 @@ import { MaterialModule } from './material.module';
 
 import 'chartjs-plugin-zoom';
 import 'chartjs-plugin-annotation';
-//import 'chartjs-plugin-streaming';
 
 import { CoreModule } from '@app/core';
 import { SharedModule } from '@app/shared';
 import { HomeModule } from './home/home.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-/* 
-export const eel = (<any>window).eel;
-eel.set_host('ws://localhost:8000');
-
-function sayHelloJS(x: any) {
-  console.log('Hello from ' + x);
-}
-(<any>window).eel.expose(sayHelloJS, 'say_hello_js'); */
 @NgModule({
   imports: [
     BrowserModule,

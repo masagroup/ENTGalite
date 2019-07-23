@@ -48,7 +48,7 @@ export class HomeComponent implements OnInit {
   _selectedLine = '';
   dateTime: Date;
   options: any;
-  datasets: any;
+  datasets: any[];
   maxStation: number;
   minTime: number;
   maxTime: number;
@@ -75,10 +75,39 @@ export class HomeComponent implements OnInit {
     this.isLoading = false;
   }
 
-  onInputRange(value: any) {
-    console.log(value);
-    const min = this.chart.options.scales.xAxes[0].time.min;
-    const max = this.chart.options.scales.xAxes[0].time.max;
+  selectLine(lineName: string, event: any) {
+    console.log(lineName, event.checked);
+    if (!this.datasets) {
+      this.selectedLine = lineName;
+    } else if (event.checked) {
+      const { traces, stations, minTime, maxTime, minStation, maxStation } = this.homeService.getInitialTraces(
+        this.data,
+        lineName,
+      );
+      this.datasets = this.datasets.concat(traces);
+      if (this.chart.options.plugins.zoom.pan.rangeMax.x < maxTime) {
+        this.chart.options.plugins.zoom.pan.rangeMax.x = maxTime;
+      }
+      if (this.chart.options.plugins.zoom.pan.rangeMin.x < minTime) {
+        this.chart.options.plugins.zoom.pan.rangeMax.x = minTime;
+      }
+      if (this.chart.options.plugins.zoom.zoom.rangeMax.x < maxTime) {
+        this.chart.options.plugins.zoom.zoom.rangeMax.x = maxTime;
+      }
+      if (this.chart.options.plugins.zoom.zoom.rangeMin.x < minTime) {
+        this.chart.options.plugins.zoom.zoom.rangeMax.x = minTime;
+      }
+      console.log(this.datasets, traces);
+      this.chart.update();
+    } else {
+      this.datasets.forEach((element, index) => {
+        if (element.selectedLine === lineName) {
+          this.intersect = this.intersect.filter((x) => x.dataIndex !== index);
+        }
+      });
+      this.datasets = this.datasets.filter((x) => x.selectedLine !== lineName);
+      this.chart.update();
+    }
   }
 
   private updateInfo = (chart: any) => {
@@ -138,7 +167,7 @@ export class HomeComponent implements OnInit {
     if (change) {
       this.chart.update();
     }
-  };
+  }
 
   set selectedLine(selectedLine: string) {
     this._selectedLine = selectedLine;
@@ -148,7 +177,6 @@ export class HomeComponent implements OnInit {
     );
     this.minTime = minTime;
     this.maxTime = maxTime;
-    console.log(minTime, maxTime);
     this.maxStation = maxStation;
     this.intersect = [];
     this.datasets = traces;
@@ -178,7 +206,7 @@ export class HomeComponent implements OnInit {
         xAxes: [
           {
             gridLines: {
-              color: 'rgba(0, 0, 0)'
+              color: 'rgba(90, 94, 91)'
             },
             type: 'time',
             time: {
@@ -205,11 +233,10 @@ export class HomeComponent implements OnInit {
         yAxes: [
           {
             gridLines: {
-              color: 'rgba(0, 0, 0)'
+              color: 'rgba(90, 94, 91)'
             },
             ticks: {
-              stepSize: 1,
-              display: false
+              stepSize: 1
             }
           }
         ]
