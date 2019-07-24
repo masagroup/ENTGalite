@@ -3,8 +3,8 @@ import { Injectable } from '@angular/core';
 export interface StopPoint {
   stop_point_name: string;
   stop_point_id: string;
-  utc_departure_time: string;
-  utc_arrival_time: string;
+  departure_time: string;
+  arrival_time: string;
 }
 export interface Marche {
   marche_name: string;
@@ -44,6 +44,7 @@ export class HomeService {
 
   parseDateTime(rawDate: string): Date {
     const datePattern = /^(\d{4})(\d{2})(\d{2})[T](\d{2})(\d{2})(\d{2})$/;
+    console.log(rawDate);
     const [, year, month, day, hours, minute, second] = datePattern.exec(rawDate).map((x: string) => parseInt(x, 10));
     const utcDate = new Date(year, month - 1, day, hours, minute, second);
     return new Date(this.getRealtime(utcDate));
@@ -91,8 +92,8 @@ export class HomeService {
       marchNames.push(marche.marche_name);
       const trace: any[] = [];
       stopPoints.forEach((stopPoint: StopPoint) => {
-        const arrivalTime = this.getTimeWithDate(stopPoint.utc_arrival_time, date).valueOf();
-        const departureTime = this.getTimeWithDate(stopPoint.utc_departure_time, date).valueOf();
+        const arrivalTime = this.parseDateTime(stopPoint.arrival_time).valueOf();
+        const departureTime = this.parseDateTime(stopPoint.departure_time).valueOf();
 
         if (!stations.includes(stopPoint.stop_point_name)) {
           stations.push(stopPoint.stop_point_name);
