@@ -85,7 +85,7 @@ export class HomeComponent implements OnInit {
       const { traces, stations, minTime, maxTime, minStation, maxStation } = this.homeService.getInitialTraces(
         this.data,
         lineName,
-        colorList[this.colorIndex],
+        colorList[this.colorIndex]
       );
       this.colorIndex += 1;
       if (this.colorIndex === colorList.length - 1) {
@@ -111,10 +111,10 @@ export class HomeComponent implements OnInit {
       }
       this.datasets.forEach((element, index) => {
         if (element.selectedLine === lineName) {
-          this.intersect = this.intersect.filter((x) => x.dataIndex !== index);
+          this.intersect = this.intersect.filter(x => x.dataIndex !== index);
         }
       });
-      this.datasets = this.datasets.filter((x) => x.selectedLine !== lineName);
+      this.datasets = this.datasets.filter(x => x.selectedLine !== lineName);
       this.chart.update();
     }
   }
@@ -176,7 +176,7 @@ export class HomeComponent implements OnInit {
     if (change) {
       this.chart.update();
     }
-  }
+  };
 
   set selectedLine(selectedLine: string) {
     this._selectedLine = selectedLine;

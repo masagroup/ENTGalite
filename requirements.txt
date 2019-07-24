@@ -1,7 +1,6 @@
 whichcraft==0.6.0
 bottle==0.12.17
 bottle-websocket==0.2.9
-whichcraft==0.6.0
 PyInstaller==3.5
 future==0.17.1
 Eel==0.10.4
