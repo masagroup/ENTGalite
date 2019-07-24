@@ -76,7 +76,12 @@ class TestProtocol(TrainProtocol):
         # sncf.pawns.TRAIN_Tgv spécifique à la bdd de la SNCF
         # Cette classe est une metaclass de pysw.meta.Pwan et
         # hérite de pysw.mata.Unit
-        print("Train '%s': vitesse = %f" % (train.name, train.speed))
+        lat, lon = train.position
+        print("Train '%s': vitesse = %f, pos = (%f,%f)" % (\
+            train.name, train.speed, lat, lon))
+        # On connait la position des gares (des stop_points)
+        # donc on peut approximer si un train est proche d'une gare
+        # on verra plus tard.
         
 # la factory qui est en charge d'instancier le protocol
 # lors de la connexion à la simulation
@@ -91,13 +96,17 @@ if __name__ == '__main__':
     conf = pysw.config.default
 
     # pour une connexion à distance, sinon la config par défaut
-    #pysw.config.default.root_dir = r"xxx" # On verra ensemble
+    # avec une sim lancée à distance avec SWORD admin, et install par défaut
+    # root_dir = r"C:\ProgramData\MASA Group\SWORD Client\bin\_\3"
+    pysw.config.default.root_dir = r"C:\ProgramData\MASA Group\SWORD Client\bin\_\3" 
+
     # en externe (hors masa): "46.218.153.46"
     # en interne (dans masa): "172.19.2.91"
     # default = localhost    
-    conf.server_name_or_ip = "172.19.2.91" 
+    conf.server_name_or_ip = "46.218.153.46"
 
-    conf.port_sim = 16276 # cf. admin pour session "test ENTGalite"
+    # # le port est fournitadmin pour session "test ENTGalite" (http://46.218.153.46:8080/sncf/)
+    conf.port_sim = 16276 
     #conf.port_timeline = 16279 # port_sim + 3
 
     # la base de donnée contenue dans l'otpak est accessible
