@@ -44,10 +44,9 @@ export class HomeService {
 
   parseDateTime(rawDate: string): Date {
     const datePattern = /^(\d{4})(\d{2})(\d{2})[T](\d{2})(\d{2})(\d{2})$/;
-    console.log(rawDate);
     const [, year, month, day, hours, minute, second] = datePattern.exec(rawDate).map((x: string) => parseInt(x, 10));
     const utcDate = new Date(year, month - 1, day, hours, minute, second);
-    return new Date(utcDate);
+    return new Date(utcDate)  ;
   }
 
   getRealtime(date: Date): number {
