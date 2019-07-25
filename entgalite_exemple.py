@@ -1,6 +1,8 @@
 # encoding utf-8
 
 import pysw
+from pprint import pprint
+
 # alias pour raccourcir l'ecriture 
 P = pysw.client_protocols
 
@@ -22,7 +24,8 @@ class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
     """
 
     def is_train(self, unit):
-        return isinstance(unit, self.bdd.pawns.TRAIN_Tgv)
+        #pprint(vars(self.bdd.pawns))
+        return isinstance(unit, self.bdd.pawns.TRAIN_Tgv) or isinstance(unit, self.bdd.pawns.TRAIN_Diesel)
 
     def OnReceived_ControlSendCurrentStateBegin(self, msg):
         self.bdd = self.factory.physical_base        
@@ -66,12 +69,16 @@ class TestProtocol(TrainProtocol):
 
     # Appelé chaque tick de la simulation
     # on a ainsi l'heure courante
+    def OnReceived_ControlBeginTick(self, msg):
+        pass
+
     def OnReceived_ControlEndTick(self, msg):
         super().OnReceived_ControlEndTick(msg)
         H = self.SIM_datetime.strftime("%H:%M:%S")
         print("heure SIM: %s, nb trains: %d" % (H, len(self.trains_by_id_sim)))
             
     def OnUpdate_train(self, train):
+        pprint(vars(train))
         # le train est ici une instance d'une class de type
         # sncf.pawns.TRAIN_Tgv spécifique à la bdd de la SNCF
         # Cette classe est une metaclass de pysw.meta.Pwan et
@@ -98,7 +105,7 @@ if __name__ == '__main__':
     # pour une connexion à distance, sinon la config par défaut
     # avec une sim lancée à distance avec SWORD admin, et install par défaut
     # root_dir = r"C:\ProgramData\MASA Group\SWORD Client\bin\_\3"
-    pysw.config.default.root_dir = r"C:\ProgramData\MASA Group\SWORD Client\bin\_\3" 
+    pysw.config.default.root_dir = "C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2" 
 
     # en externe (hors masa): "46.218.153.46"
     # en interne (dans masa): "172.19.2.91"
@@ -106,13 +113,18 @@ if __name__ == '__main__':
     conf.server_name_or_ip = "46.218.153.46"
 
     # # le port est fournitadmin pour session "test ENTGalite" (http://46.218.153.46:8080/sncf/)
-    conf.port_sim = 16276 
+    conf.port_sim = 10168
     #conf.port_timeline = 16279 # port_sim + 3
 
     # la base de donnée contenue dans l'otpak est accessible
     # comme un module python
     conf.data_set = "SNCF"
     pysw.physical.install_importer(conf)
+    print("aa")
+
+    import sys
+    sys.path.append("C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2\data\models\SNCF\physical")
+    print(sys.path[-1])
     import sncf
 
     # le login sans mot de passe
