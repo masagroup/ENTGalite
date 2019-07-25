@@ -45,6 +45,7 @@ export class HomeComponent implements OnInit {
   isLoading = true;
   data: MarchesByLines;
   linesName: string[] = [];
+  stations: { line: string; stations: string[] }[] = [];
   intersect: { datasetIndex: number; dataIndex: number }[] = [];
   _selectedLine = '';
   dateTime: Date;
@@ -78,7 +79,6 @@ export class HomeComponent implements OnInit {
   }
 
   selectLine(lineName: string, event: any) {
-    console.log(lineName, event.checked);
     if (!this.datasets) {
       this.selectedLine = lineName;
     } else if (event.checked) {
@@ -87,6 +87,7 @@ export class HomeComponent implements OnInit {
         lineName,
         colorList[this.colorIndex]
       );
+      this.stations.push({ line: lineName, stations: stations });
       this.colorIndex += 1;
       if (this.colorIndex === colorList.length - 1) {
         this.colorIndex = 0;
@@ -114,6 +115,7 @@ export class HomeComponent implements OnInit {
           this.intersect = this.intersect.filter(x => x.dataIndex !== index);
         }
       });
+      this.stations = this.stations.filter(x => x.line !== lineName);
       this.datasets = this.datasets.filter(x => x.selectedLine !== lineName);
       this.chart.update();
     }
@@ -172,11 +174,16 @@ export class HomeComponent implements OnInit {
           break;
         }
       }
-    });
+    });/* 
+    if (max - min > 7200000) {
+      this.chart.options.scales.xAxes[0].time.unitStepSize = 600000 * 12;
+    } else {
+      this.chart.options.scales.xAxes[0].time.unitStepSize = 600000;
+    } */
     if (change) {
       this.chart.update();
     }
-  };
+  }
 
   set selectedLine(selectedLine: string) {
     this._selectedLine = selectedLine;
@@ -185,6 +192,7 @@ export class HomeComponent implements OnInit {
       this._selectedLine,
       colorList[this.colorIndex]
     );
+    this.stations.push({ line: selectedLine, stations: stations });
     this.colorIndex += 1;
     this.minTime = minTime;
     this.maxTime = maxTime;
@@ -221,8 +229,8 @@ export class HomeComponent implements OnInit {
             },
             type: 'time',
             time: {
+              unitStepSize: 10,
               unit: 'minute',
-              stepSize: 10,
               displayFormats: {
                 minute: 'HH:mm',
                 hour: 'HH:mm'
@@ -247,7 +255,22 @@ export class HomeComponent implements OnInit {
               color: 'rgba(90, 94, 91)'
             },
             ticks: {
-              stepSize: 1
+              fontColor: 'black',
+              stepSize: 1,
+              padding: 50,
+              callback: (value: number, index: number) => {
+                let stationsLabel: string;
+                this.stations.forEach(station => {
+                  if (station.stations[value]) {
+                    if (!stationsLabel) {
+                      stationsLabel = station.stations[value];
+                    } else {
+                      stationsLabel += ' / ' + station.stations[value];
+                    }
+                  }
+                });
+                return stationsLabel;
+              }
             }
           }
         ]
