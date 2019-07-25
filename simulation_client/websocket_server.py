@@ -35,20 +35,17 @@ def pick_file(folder):
         return '{} is not a valid folder'.format(folder)
 
 
-def start_eel(develop):
+def start_app(develop):
     """Start Eel with either production or development configuration."""
     if develop:
-        directory = './interface/src/'
+        directory = '../interface/src/'
         app = None
         page = {'port': 4200}
     else:
-        directory = './interface/build'
+        directory = '../interface/build'
         app = 'chrome-app'
         page = 'index.html'
     eel.init(directory, ['.js', '.ts', '.html'])
-    # These will be queued until the first connection is made, but won't be repeated on a page reload
-    #say_hello_py('Python World!')
-    #eel.say_hello_js('Python World!')   # Call a JavaScript function (must be after `eel.init()`)
 
     eel_kwargs = dict(
         host='localhost',
@@ -63,10 +60,3 @@ def start_eel(develop):
             eel.start(page, mode='edge', **eel_kwargs)
         else:
             raise
-
-
-if __name__ == '__main__':
-    import sys
-
-    # Pass any second argument to enable debugging
-    start_eel(develop=len(sys.argv) == 2)
