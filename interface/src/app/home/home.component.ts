@@ -71,7 +71,10 @@ export class HomeComponent implements OnInit {
             return x.line_name;
           }
         });
+        console.log(this.data);
+        console.log(this.linesName);
         this.linesName = this.linesName.filter((x: string) => x);
+        console.log(this.linesName);
       };
       reader.readAsText(files.files[0]);
     });
@@ -174,7 +177,7 @@ export class HomeComponent implements OnInit {
           break;
         }
       }
-    });/* 
+    }); /* 
     if (max - min > 7200000) {
       this.chart.options.scales.xAxes[0].time.unitStepSize = 600000 * 12;
     } else {
@@ -183,7 +186,7 @@ export class HomeComponent implements OnInit {
     if (change) {
       this.chart.update();
     }
-  }
+  };
 
   set selectedLine(selectedLine: string) {
     this._selectedLine = selectedLine;
