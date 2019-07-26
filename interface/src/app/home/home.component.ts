@@ -346,13 +346,17 @@ export class HomeComponent implements OnInit {
           display: (context: any) => {
             const min = context.chart.chart.config.options.scales.xAxes[0].time.min;
             const max = context.chart.config.options.scales.xAxes[0].time.max;
+            const len = context.dataset.data.length - 1;
+            if (context.dataIndex === 0 && context.dataset.data[0].x < min) {
+              return false;
+            }
+            if (context.dataIndex === len && context.dataset.data[len].x < min) {
+              return false;
+            }
             for (const intersect of this.intersect) {
               if (intersect.dataIndex === context.dataIndex && intersect.datasetIndex === context.datasetIndex) {
                 return true;
               }
-            }
-            if (context.dataIndex === 0 && context.dataset.data[0].x < min) {
-              return false;
             }
             return context.dataIndex === 0 || context.dataIndex === context.dataset.data.length - 1;
           }
