@@ -71,10 +71,7 @@ export class HomeComponent implements OnInit {
             return x.line_name;
           }
         });
-        console.log(this.data);
-        console.log(this.linesName);
         this.linesName = this.linesName.filter((x: string) => x);
-        console.log(this.linesName);
       };
       reader.readAsText(files.files[0]);
     });
