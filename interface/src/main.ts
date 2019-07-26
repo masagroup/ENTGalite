@@ -15,12 +15,9 @@ function sayHelloJS(x: any) {
   console.log('Hello from ' + x);
 }
 export const eel = window.eel;
-console.log(window.eel);
-if (eel) {
-  eel.set_host('ws://localhost:8000');
-  (<any>window).eel.expose(sayHelloJS, 'say_hello_js');
-}
-
+eel.set_host('ws://localhost:8000');
+eel.expose(sayHelloJS, 'say_hello_js');
+eel.say_hello_py("Benoit l'enculé");
 if (environment.production) {
   enableProdMode();
 }
