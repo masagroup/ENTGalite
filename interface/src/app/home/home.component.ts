@@ -174,7 +174,7 @@ export class HomeComponent implements OnInit {
           break;
         }
       }
-    });/* 
+    }); /* 
     if (max - min > 7200000) {
       this.chart.options.scales.xAxes[0].time.unitStepSize = 600000 * 12;
     } else {
@@ -183,7 +183,7 @@ export class HomeComponent implements OnInit {
     if (change) {
       this.chart.update();
     }
-  }
+  };
 
   set selectedLine(selectedLine: string) {
     this._selectedLine = selectedLine;

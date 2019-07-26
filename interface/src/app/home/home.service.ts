@@ -10,10 +10,16 @@ export interface Marche {
   marche_name: string;
   stop_points: StopPoint[];
 }
+
+export interface Station {
+  name: string;
+  label: string;
+}
 export interface Line {
   line_name: string;
   line_id: string;
   marches: Marche[];
+  stations: Station[];
 }
 export interface MarchesByLines {
   date_times: string;
@@ -46,7 +52,7 @@ export class HomeService {
     const datePattern = /^(\d{4})(\d{2})(\d{2})[T](\d{2})(\d{2})(\d{2})$/;
     const [, year, month, day, hours, minute, second] = datePattern.exec(rawDate).map((x: string) => parseInt(x, 10));
     const utcDate = new Date(year, month - 1, day, hours, minute, second);
-    return new Date(utcDate)  ;
+    return new Date(utcDate);
   }
 
   getRealtime(date: Date): number {
@@ -78,7 +84,7 @@ export class HomeService {
     const traces: any[] = [];
     const stopName: string[] = [];
     const marchNames: string[] = [];
-    const stations: string[] = [];
+    const stations: string[] = line.stations.map((station: Station) => station.name);
     let minTime: number;
     let maxTime: number;
     let minStation: number;
@@ -93,10 +99,6 @@ export class HomeService {
       stopPoints.forEach((stopPoint: StopPoint) => {
         const arrivalTime = this.parseDateTime(stopPoint.arrival_time).valueOf();
         const departureTime = this.parseDateTime(stopPoint.departure_time).valueOf();
-
-        if (!stations.includes(stopPoint.stop_point_name)) {
-          stations.push(stopPoint.stop_point_name);
-        }
         const y = stations.findIndex((x: string) => x === stopPoint.stop_point_name);
         if (!maxTime) {
           maxTime = departureTime;

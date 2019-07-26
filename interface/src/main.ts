@@ -11,16 +11,16 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from '@app/app.module';
 import { environment } from '@env/environment';
 
-function sayHelloJS(x: any) {
+/* function sayHelloJS(x: any) {
   console.log('Hello from ' + x);
 }
 export const eel = window.eel;
 console.log(window.eel);
 if (eel) {
   eel.set_host('ws://localhost:8000');
-  (<any>window).eel.expose(sayHelloJS, 'say_hello_js');
+  window.eel.expose(sayHelloJS, 'say_hello_js');
 }
-
+ */
 if (environment.production) {
   enableProdMode();
 }
