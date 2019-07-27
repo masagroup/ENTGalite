@@ -125,6 +125,7 @@ export class HomeComponent implements OnInit {
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets = this.datasets;
+    const _options = this.options;
     let change = false;
     this.intersect.forEach(intersect => {
       change = true;
@@ -174,12 +175,20 @@ export class HomeComponent implements OnInit {
           break;
         }
       }
-    }); /* 
+    });
     if (max - min > 7200000) {
-      this.chart.options.scales.xAxes[0].time.unitStepSize = 600000 * 12;
+      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
+        chart.chart.options.scales.xAxes[0].time.unitStepSize = 2;
+        chart.chart.options.scales.xAxes[0].time.unit = 'hour';
+        chart.chart.update();
+      }
     } else {
-      this.chart.options.scales.xAxes[0].time.unitStepSize = 600000;
-    } */
+      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
+        chart.chart.options.scales.xAxes[0].time.unitStepSize = 10;
+        chart.chart.options.scales.xAxes[0].time.unit = 'minute';
+        chart.chart.update();
+      }
+    }
     if (change) {
       this.chart.update();
     }

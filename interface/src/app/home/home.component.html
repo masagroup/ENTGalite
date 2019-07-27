@@ -7,8 +7,13 @@
     </mat-form-field>
   </div>
 
-  <div *ngIf="data" class="lineName_container">
-    <mat-checkbox class="lineName_item" *ngFor="let lineName of linesName" value="{{ lineName }}" (change)="selectLine(lineName, $event)">
+  <div *ngIf="data" class="line-name-container">
+    <mat-checkbox
+      class="line-name-item"
+      *ngFor="let lineName of linesName"
+      value="{{ lineName }}"
+      (change)="selectLine(lineName, $event)"
+    >
       {{ lineName }}
     </mat-checkbox>
   </div>
