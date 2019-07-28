@@ -21,13 +21,7 @@ P = pysw.client_protocols
 @eel.expose  # Expose function to JavaScript
 def say_hello_py(x):
     """Print message from JavaScript on app initialization, then call a JS function."""
-    print('Hello from %s' % x)  # noqa T001
-    try:
-        print(dir(eel))
-        eel.say_hello_js("x")
-    except Exception as e:
-        print(e)
-        pass
+    eel.update_train_js(x)
 
 
 class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
@@ -38,7 +32,6 @@ class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
     """
 
     def is_train(self, unit):
-        #pprint(vars(self.bdd.pawns))
         return isinstance(unit, self.bdd.pawns.TRAIN_Tgv) or isinstance(unit, self.bdd.pawns.TRAIN_Diesel)
 
     def OnReceived_ControlSendCurrentStateBegin(self, msg):
@@ -86,7 +79,8 @@ class TestProtocol(TrainProtocol):
             
     def OnUpdate_train(self, train):
         lat, lon = train.position
-        say_hello_py("Train")
+
+        say_hello_py(' '.join([train.name, str(train.speed), str(lat), str(lon)]))
         print("Train '%s': vitesse = %f, pos = (%f,%f)" % (\
             train.name, train.speed, lat, lon))
 
@@ -96,15 +90,10 @@ class TestFactory(P.SWFactory):
         super().__init__(phybdd, login, protocol=TestProtocol)
 
 def start_connection(ip="46.218.153.46", port=10168):
-    say_hello_py("aasqdlsdslqsqlsqldsqlsdqlsdqa")
     asyncio.set_event_loop(asyncio.new_event_loop())
-
-    import time
-    time.sleep(5)
     conf = pysw.config.default
     pysw.config.default.root_dir = "C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2" 
     conf.server_name_or_ip = ip
-    import sys
 
     # # le port est fournitadmin pour session "test ENTGalite" (http://46.218.153.46:8080/sncf/)
     conf.port_sim = port

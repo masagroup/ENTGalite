@@ -6,6 +6,10 @@ import { BaseChartDirective } from 'ng2-charts';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.service';
 import * as Chart from 'chart.js';
+
+
+
+
 Chart.defaults.global.elements.line.fill = false;
 const colorList = ['#ffff00', '#008000', '#f23320', '#1d1cf2', '#4ef2f5', '#db59f5', '#0000'];
 
@@ -62,6 +66,13 @@ export class HomeComponent implements OnInit {
   constructor(private homeService: HomeService) {}
 
   ngOnInit() {
+    const eel = window.eel;
+    eel.set_host('ws://localhost:8000');
+    const UpdateTrain = (data: string) => {
+      console.log(data);
+    }
+    eel.expose(UpdateTrain, 'update_train_js');
+    
     this.file.valueChanges.subscribe((files: any) => {
       const reader = new FileReader();
       reader.onload = () => {
