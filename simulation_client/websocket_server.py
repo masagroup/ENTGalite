@@ -2,11 +2,11 @@
 """Main Python application file for the EEL-CRA demo."""
 
 import os
+import sys
 import platform
 import random
 import threading
 import asyncio
-
 import eel
 
 # encoding utf-8
@@ -18,11 +18,14 @@ from pprint import pprint
 P = pysw.client_protocols
 
 
-@eel.expose  # Expose function to JavaScript
-def say_hello_py(x):
-    """Print message from JavaScript on app initialization, then call a JS function."""
-    eel.update_train_js(x)
+def send_train_to_interface(train: str):
+    """Send Time to interface in order to synchronize simulation and interface"""
+    eel.update_train_js(train)
 
+
+def send_time_to_interface(date: str):
+    """Send Time to interface in order to synchronize simulation and interface"""
+    eel.update_sim_time_js(date)
 
 class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
     """
@@ -75,12 +78,13 @@ class TestProtocol(TrainProtocol):
 
     def OnReceived_ControlEndTick(self, msg):
         super().OnReceived_ControlEndTick(msg)
-        H = self.SIM_datetime.strftime("%H:%M:%S")
-            
+        print("heure SIM: {0}".format(self.SIM_datetime))
+        send_time_to_interface(self.SIM_datetime.isoformat())
+
     def OnUpdate_train(self, train):
         lat, lon = train.position
 
-        say_hello_py(' '.join([train.name, str(train.speed), str(lat), str(lon)]))
+        send_train_to_interface(' '.join([train.name, str(train.speed), str(lat), str(lon)]))
         print("Train '%s': vitesse = %f, pos = (%f,%f)" % (\
             train.name, train.speed, lat, lon))
 
@@ -124,7 +128,7 @@ def start_app(develop):
         size=(1280, 800),
     )
     t = threading.Thread(target=start_connection)
-    t.daemon = True
+    t.daemon = False
     t.start()
     try:
         eel.start(page, mode=app, **eel_kwargs)
