@@ -1,27 +1,30 @@
-<div class="container">
-  <app-loader [isLoading]="isLoading" size="1.5"></app-loader>
-  <div [hidden]="isLoading">
+<app-loader [isLoading]="isLoading" size="1.5"></app-loader>
+<div [hidden]="isLoading">
+  <div class="container">
     <mat-form-field>
       <ngx-mat-file-input [formControl]="file" placeholder="JSON Marches" [accept]="'.json'"></ngx-mat-file-input>
       <mat-icon matSuffix>file</mat-icon>
     </mat-form-field>
+  </div>
 
-    <ul *ngIf="data" style="list-style-type:none;">
-      <li *ngFor="let lineName of linesName">
-        <mat-checkbox value="{{ lineName }}" (change)="selectLine(lineName, $event)">
-          {{ lineName }}
-        </mat-checkbox>
-      </li>
-    </ul>
-    <div *ngIf="selectedLine" class="chart">
-      <canvas
-        baseChart
-        class="chart"
-        [chartType]="'line'"
-        [datasets]="datasets"
-        [options]="options"
-        [plugins]="plugins"
-      ></canvas>
-    </div>
+  <div *ngIf="data" class="line-name-container">
+    <mat-checkbox
+      class="line-name-item"
+      *ngFor="let lineName of linesName"
+      value="{{ lineName }}"
+      (change)="selectLine(lineName, $event)"
+    >
+      {{ lineName }}
+    </mat-checkbox>
+  </div>
+  <div *ngIf="selectedLine" class="chart">
+    <canvas
+      baseChart
+      class="chart"
+      [chartType]="'line'"
+      [datasets]="datasets"
+      [options]="options"
+      [plugins]="plugins"
+    ></canvas>
   </div>
 </div>

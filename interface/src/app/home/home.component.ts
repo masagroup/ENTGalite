@@ -136,6 +136,7 @@ export class HomeComponent implements OnInit {
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets = this.datasets;
+    const _options = this.options;
     let change = false;
     this.intersect.forEach(intersect => {
       change = true;
@@ -185,16 +186,24 @@ export class HomeComponent implements OnInit {
           break;
         }
       }
-    });/* 
+    });
     if (max - min > 7200000) {
-      this.chart.options.scales.xAxes[0].time.unitStepSize = 600000 * 12;
+      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
+        chart.chart.options.scales.xAxes[0].time.unitStepSize = 2;
+        chart.chart.options.scales.xAxes[0].time.unit = 'hour';
+        chart.chart.update();
+      }
     } else {
-      this.chart.options.scales.xAxes[0].time.unitStepSize = 600000;
-    } */
+      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
+        chart.chart.options.scales.xAxes[0].time.unitStepSize = 10;
+        chart.chart.options.scales.xAxes[0].time.unit = 'minute';
+        chart.chart.update();
+      }
+    }
     if (change) {
       this.chart.update();
     }
-  }
+  };
 
   set selectedLine(selectedLine: string) {
     this._selectedLine = selectedLine;
@@ -357,13 +366,17 @@ export class HomeComponent implements OnInit {
           display: (context: any) => {
             const min = context.chart.chart.config.options.scales.xAxes[0].time.min;
             const max = context.chart.config.options.scales.xAxes[0].time.max;
+            const len = context.dataset.data.length - 1;
+            if (context.dataIndex === 0 && context.dataset.data[0].x < min) {
+              return false;
+            }
+            if (context.dataIndex === len && context.dataset.data[len].x < min) {
+              return false;
+            }
             for (const intersect of this.intersect) {
               if (intersect.dataIndex === context.dataIndex && intersect.datasetIndex === context.datasetIndex) {
                 return true;
               }
-            }
-            if (context.dataIndex === 0 && context.dataset.data[0].x < min) {
-              return false;
             }
             return context.dataIndex === 0 || context.dataIndex === context.dataset.data.length - 1;
           }

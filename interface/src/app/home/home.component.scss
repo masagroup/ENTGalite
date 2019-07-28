@@ -3,6 +3,17 @@
   padding-top: 5px;
 }
 
+.line-name-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.line-name-item {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
 .chart {
   height: 100vh;
 }
