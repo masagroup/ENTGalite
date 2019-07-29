@@ -140,7 +140,8 @@ export class HomeService {
         lineTension: 0,
         borderDash: [10, 5],
         borderWidth: 1,
-        selectedLine: selectedLine
+        selectedLine: selectedLine,
+        prediction: true
       });
     });
     traces.sort((a: any, b: any) => {

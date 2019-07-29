@@ -8,6 +8,7 @@ import random
 import threading
 import asyncio
 import eel
+import json
 
 # encoding utf-8
 
@@ -74,12 +75,13 @@ class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
 class TestProtocol(TrainProtocol):
 
     def OnReceived_ControlBeginTick(self, msg):
-        pass
+        send_time_to_interface(msg.date_time.data)
+        
 
     def OnReceived_ControlEndTick(self, msg):
+        pass
         super().OnReceived_ControlEndTick(msg)
         print("heure SIM: {0}".format(self.SIM_datetime))
-        send_time_to_interface(self.SIM_datetime.isoformat())
 
     def OnUpdate_train(self, train):
         lat, lon = train.position
