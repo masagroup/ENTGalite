@@ -6,6 +6,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.service';
 import * as Chart from 'chart.js';
+
 Chart.defaults.global.elements.line.fill = false;
 const colorList = ['#ffff00', '#008000', '#f23320', '#1d1cf2', '#4ef2f5', '#db59f5', '#0000'];
 
@@ -49,6 +50,7 @@ export class HomeComponent implements OnInit {
   intersect: { datasetIndex: number; dataIndex: number }[] = [];
   _selectedLine = '';
   dateTime: Date;
+  simTime: Date;
   colorIndex = 0;
   options: any;
   datasets: any[];
@@ -62,6 +64,19 @@ export class HomeComponent implements OnInit {
   constructor(private homeService: HomeService) {}
 
   ngOnInit() {
+    const eel = window.eel;
+    eel.set_host('ws://localhost:8000');
+    const UpdateTrain = (data: string) => {
+      console.log(data);
+    };
+    const UpdateSimTime = (data: string) => {
+      this.simTime = this.homeService.parseDateTime(data);
+      console.log(this.simTime);
+      this.updateRealTime();
+    };
+    eel.expose(UpdateTrain, 'update_train_js');
+    eel.expose(UpdateSimTime, 'update_sim_time_js');
+
     this.file.valueChanges.subscribe((files: any) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -71,11 +86,71 @@ export class HomeComponent implements OnInit {
             return x.line_name;
           }
         });
+        console.log(this.data);
         this.linesName = this.linesName.filter((x: string) => x);
       };
       reader.readAsText(files.files[0]);
     });
     this.isLoading = false;
+  }
+
+  private updateRealTime() {
+    const data = [
+      {
+        x: this.simTime.getTime(),
+        y: 0
+      },
+      {
+        x: this.simTime.getTime(),
+        y: this.maxStation
+      }
+    ];
+    if (!this.chart) {
+      return;
+    }
+    const _datasets = this.chart.chart.data.datasets;
+    const indexRealTime = _datasets.findIndex(x => x.label === 'REAL TIME');
+    if (indexRealTime !== -1) {
+      _datasets.splice(indexRealTime, 1);
+    }
+    console.log(_datasets);
+    _datasets.forEach((element: any, index: number) => {
+      if (element.prediction === true) {
+        if (element.data[element.data.length - 1].x < this.simTime.getTime()) {
+          _datasets.splice(index, 1);
+        }
+        if (element.data[0] && element.data[0].x < this.simTime.getTime()) {
+          const higherIndex = element.data.findIndex((x: any) => x.x > this.simTime.getTime());
+          if (element.data[higherIndex - 1]) {
+            const intersect = line_intersect(
+              element.data[higherIndex - 1].x,
+              element.data[higherIndex - 1].y,
+              element.data[higherIndex].x,
+              element.data[higherIndex].y,
+              data[0].x,
+              data[0].y,
+              data[1].x,
+              data[1].y
+            );
+            console.log(intersect, higherIndex - (element.data.length - 1));
+            element.data.splice(0, element.data.length  - (element.data.length - higherIndex));
+            element.data.unshift({x: intersect.x, y: intersect.y})
+            console.log(element.data);
+          }
+          console.log(higherIndex);
+        }
+      }
+    });
+    _datasets.push({
+      type: 'scatter',
+      label: 'REAL TIME',
+      data: data,
+      showLine: true,
+      borderColor: 'black',
+      pointRadius: 0,
+      borderWidth: 1
+    });
+    this.chart.chart.update();
   }
 
   selectLine(lineName: string, event: any) {
