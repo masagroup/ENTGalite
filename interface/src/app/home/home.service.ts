@@ -147,6 +147,6 @@ export class HomeService {
     traces.sort((a: any, b: any) => {
       return a.data[0].x - b.data[0].x;
     });
-    return { traces, stations, minTime, maxTime, minStation, maxStation };
+    return { traces, stations, minTime, maxTime, minStation, maxStation, marchNames, stationsInfo: line.stations };
   }
 }

@@ -37,6 +37,48 @@ function line_intersect(
   };
 }
 
+interface Point {
+  x: number;
+  y: number;
+}
+function project(p: Point, a: Point, b: Point) {
+  var atob = { x: b.x - a.x, y: b.y - a.y };
+  var atop = { x: p.x - a.x, y: p.y - a.y };
+  var len = atob.x * atob.x + atob.y * atob.y;
+  var dot = atop.x * atob.x + atop.y * atob.y;
+  var t = Math.min(1, Math.max(0, dot / len));
+
+  dot = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+
+  return {
+    point: {
+      x: a.x + atob.x * t,
+      y: a.y + atob.y * t
+    },
+    left: dot < 1,
+    dot: dot,
+    t: t
+  };
+}
+
+function deg2rad(deg: number) {
+  return deg * (Math.PI/180)
+}
+
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  var R = 6371;
+  var dLat = deg2rad(lat2-lat1);
+  var dLon = deg2rad(lon2-lon1); 
+  var a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ; 
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  var d = R * c; // Distance in km
+  return d;
+}
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -54,6 +96,8 @@ export class HomeComponent implements OnInit {
   colorIndex = 0;
   options: any;
   datasets: any[];
+  marcheNames: any[] = [];
+  stationsInfo: any[] = [];
   maxStation: number;
   minTime: number;
   maxTime: number;
@@ -67,7 +111,7 @@ export class HomeComponent implements OnInit {
     const eel = window.eel;
     eel.set_host('ws://localhost:8000');
     const UpdateTrain = (data: string) => {
-      console.log(data);
+      this.updateTrain(data);
     };
     const UpdateSimTime = (data: string) => {
       this.simTime = this.homeService.parseDateTime(data);
@@ -94,6 +138,62 @@ export class HomeComponent implements OnInit {
     this.isLoading = false;
   }
 
+  private updateTrain(train: string) {
+    const dataSplited = train.split(' ');
+    let line = '';
+    this.marcheNames.forEach(marche => {
+      if (marche.marcheNames.findIndex((marchName: string) => marchName === dataSplited[0].split('/')[0])) {
+        line = marche.lineName;
+      }
+    });
+
+    console.log(dataSplited[0].split('/')[0]);
+    console.log(line);
+    const index = this.stationsInfo.findIndex(x => x.lineName === line);
+    let bestStations: any;
+    let stations1: any;
+    let stations2: any;
+    if (index === -1) {
+      return;
+    }
+    const coordTrain: Point = { x: parseFloat(dataSplited[2]), y: parseFloat(dataSplited[3]) };
+    this.stationsInfo[index].stationsInfo.forEach((element: any, i: number) => {
+      if (i === this.stationsInfo[index].stationsInfo.length - 1) {
+        return;
+      }
+      const coord1: Point = { x: parseFloat(element.stop_area.coord.lat), y: parseFloat(element.stop_area.coord.lon) };
+      const coord2: Point = {
+        x: parseFloat(this.stationsInfo[index].stationsInfo[i + 1].stop_area.coord.lat),
+        y: parseFloat(this.stationsInfo[index].stationsInfo[i + 1].stop_area.coord.lon)
+      };
+      const position = project(coordTrain, coord1, coord2);
+      if (Number.isNaN(position.t)) {
+        return;
+      }
+      if (!bestStations || Math.abs(bestStations.dot) > Math.abs(position.dot)) {
+        bestStations = position;
+        stations1 = this.stationsInfo[index].stationsInfo[i];
+        stations2 = this.stationsInfo[index].stationsInfo[i + 1];
+      }
+    });
+    if (bestStations) {
+      console.log(stations1.stop_area.coord, stations2.stop_area.coord, bestStations.point);
+      console.log(getDistanceFromLatLonInKm(parseFloat(stations1.stop_area.coord.lat), parseFloat(stations1.stop_area.coord.lon), parseFloat(stations2.stop_area.coord.lat), parseFloat(stations2.stop_area.coord.lon)));
+      const dist1 = getDistanceFromLatLonInKm(parseFloat(stations1.stop_area.coord.lat), parseFloat(stations1.stop_area.coord.lon), parseFloat(bestStations.point.x), parseFloat(bestStations.point.y))
+      console.log(dist1);
+      const totalDist = Math.sqrt(
+        Math.pow((parseFloat(stations1.stop_area.coord.lat) - parseFloat(stations2.stop_area.coord.lat)), 2) +
+          Math.pow((parseFloat(stations1.stop_area.coord.lon) - parseFloat(stations2.stop_area.coord.lon)), 2)
+      );
+      const dist = Math.sqrt(
+        Math.pow((parseFloat(stations1.stop_area.coord.lat) - parseFloat(bestStations.point.x)), 2) +
+          Math.pow((parseFloat(stations1.stop_area.coord.lon) - parseFloat(bestStations.point.y)), 2)
+      );
+      console.log(dist, totalDist);
+      
+    }
+  }
+
   private updateRealTime() {
     const data = [
       {
@@ -113,7 +213,6 @@ export class HomeComponent implements OnInit {
     if (indexRealTime !== -1) {
       _datasets.splice(indexRealTime, 1);
     }
-    console.log(_datasets);
     _datasets.forEach((element: any, index: number) => {
       if (element.prediction === true) {
         if (element.data[element.data.length - 1].x < this.simTime.getTime()) {
@@ -132,12 +231,9 @@ export class HomeComponent implements OnInit {
               data[1].x,
               data[1].y
             );
-            console.log(intersect, higherIndex - (element.data.length - 1));
-            element.data.splice(0, element.data.length  - (element.data.length - higherIndex));
-            element.data.unshift({x: intersect.x, y: intersect.y})
-            console.log(element.data);
+            element.data.splice(0, element.data.length - (element.data.length - higherIndex));
+            element.data.unshift({ x: intersect.x, y: intersect.y });
           }
-          console.log(higherIndex);
         }
       }
     });
@@ -157,11 +253,18 @@ export class HomeComponent implements OnInit {
     if (!this.datasets) {
       this.selectedLine = lineName;
     } else if (event.checked) {
-      const { traces, stations, minTime, maxTime, minStation, maxStation } = this.homeService.getInitialTraces(
-        this.data,
-        lineName,
-        colorList[this.colorIndex]
-      );
+      const {
+        traces,
+        stations,
+        minTime,
+        maxTime,
+        minStation,
+        maxStation,
+        marchNames,
+        stationsInfo
+      } = this.homeService.getInitialTraces(this.data, lineName, colorList[this.colorIndex]);
+      this.stationsInfo.push({ lineName: lineName, stationsInfo: stationsInfo });
+      this.marcheNames.push({ lineName: lineName, marcheNames: marchNames });
       this.stations.push({ line: lineName, stations: stations });
       this.colorIndex += 1;
       if (this.colorIndex === colorList.length - 1) {
@@ -192,6 +295,8 @@ export class HomeComponent implements OnInit {
       });
       this.stations = this.stations.filter(x => x.line !== lineName);
       this.datasets = this.datasets.filter(x => x.selectedLine !== lineName);
+      this.marcheNames = this.marcheNames.filter(x => x.lineName !== lineName);
+      this.stationsInfo = this.stationsInfo.filter(x => x.lineName !== lineName);
       this.chart.update();
     }
   }
@@ -271,11 +376,18 @@ export class HomeComponent implements OnInit {
 
   set selectedLine(selectedLine: string) {
     this._selectedLine = selectedLine;
-    const { traces, stations, minTime, maxTime, minStation, maxStation } = this.homeService.getInitialTraces(
-      this.data,
-      this._selectedLine,
-      colorList[this.colorIndex]
-    );
+    const {
+      traces,
+      stations,
+      minTime,
+      maxTime,
+      minStation,
+      maxStation,
+      stationsInfo,
+      marchNames
+    } = this.homeService.getInitialTraces(this.data, this._selectedLine, colorList[this.colorIndex]);
+    this.stationsInfo.push({ lineName: selectedLine, stationsInfo: stationsInfo });
+    this.marcheNames.push({ lineName: selectedLine, marcheNames: marchNames });
     this.stations.push({ line: selectedLine, stations: stations });
     this.colorIndex += 1;
     this.minTime = minTime;
