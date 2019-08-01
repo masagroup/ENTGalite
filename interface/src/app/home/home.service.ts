@@ -14,6 +14,10 @@ export interface Marche {
 export interface Station {
   name: string;
   label: string;
+  coord: {
+    lat: string;
+    lon: string;
+  };
 }
 export interface Line {
   line_name: string;
@@ -81,10 +85,10 @@ export class HomeService {
   getInitialTraces(data: MarchesByLines, selectedLine: string, color: string) {
     const date = this.parseDateTime(data['date_time']);
     const line = data.lines.find((x: Line) => x.line_name === selectedLine);
+    const stations: Station[] = line.stations;
     const traces: any[] = [];
     const stopName: string[] = [];
     const marchNames: string[] = [];
-    const stations: string[] = line.stations.map((station: Station) => station.name);
     let minTime: number;
     let maxTime: number;
     let minStation: number;
@@ -99,7 +103,7 @@ export class HomeService {
       stopPoints.forEach((stopPoint: StopPoint) => {
         const arrivalTime = this.parseDateTime(stopPoint.arrival_time).valueOf();
         const departureTime = this.parseDateTime(stopPoint.departure_time).valueOf();
-        const y = stations.findIndex((x: string) => x === stopPoint.stop_point_name);
+        const y = stations.findIndex(station => station.name === stopPoint.stop_point_name);
         if (!maxTime) {
           maxTime = departureTime;
         } else if (maxTime && maxTime < departureTime) {
@@ -122,11 +126,13 @@ export class HomeService {
         }
         trace.push({
           x: arrivalTime,
-          y: y
+          y: y,
+          coord: stations[y].coord
         });
         trace.push({
           x: departureTime,
-          y: y
+          y: y,
+          coord: stations[y].coord
         });
         stopName.push(stopPoint.stop_point_name);
       });
@@ -144,9 +150,6 @@ export class HomeService {
         prediction: true
       });
     });
-    traces.sort((a: any, b: any) => {
-      return a.data[0].x - b.data[0].x;
-    });
-    return { traces, stations, minTime, maxTime, minStation, maxStation };
+    return { traces, stations, minTime, maxTime, minStation, maxStation, marchNames };
   }
 }
