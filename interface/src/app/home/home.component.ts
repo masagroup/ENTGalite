@@ -8,7 +8,7 @@ import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.ser
 import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
-const colorList = ['#ffff00', '#008000', '#f23320', '#1d1cf2', '#4ef2f5', '#db59f5', '#0000'];
+const colorList = ['#6E1E78', '#E05206', '#82BE00', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#D2E100', '#0088CE'];
 
 function line_intersect(
   x1: number,
@@ -91,6 +91,7 @@ export class HomeComponent implements OnInit {
   walk: {
     walk: string;
     line: string;
+    color: string;
     stations: { x: number; y: number; coord: { lat: string; lon: string } }[];
   }[] = [];
   _selectedLine = '';
@@ -153,7 +154,6 @@ export class HomeComponent implements OnInit {
       return;
     }
     const walk = this.walk[index];
-    console.log(walk);
     let bestStations: any;
     let stations1: any;
     let stations2: any;
@@ -201,14 +201,16 @@ export class HomeComponent implements OnInit {
       if (indexRealTime === -1) {
         _datasets.push(<any>{
           type: 'scatter',
+          selectedLine: walk.line,
           label: dataSplited[0],
           data: [{ x: this.simTime, y: y }],
           showLine: true,
-          borderColor: 'black',
+          borderColor: walk.color,
           pointRadius: 0,
           borderWidth: 3,
           prediction: false
         });
+        console.log(walk.color)
       } else {
         // @ts-ignore
         _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
@@ -293,6 +295,9 @@ export class HomeComponent implements OnInit {
       } = this.homeService.getInitialTraces(this.data, lineName, colorList[this.colorIndex]);
       this.marcheNames.push({ lineName: lineName, marcheNames: marchNames });
       this.stations.push({ line: lineName, stations: stations.map(station => station.name) });
+      traces.forEach((trace: any) => {
+      this.walk.push({ color: colorList[this.colorIndex], line: lineName, walk: trace.label, stations: trace.data.slice(0) });
+      });
       this.colorIndex += 1;
       if (this.colorIndex === colorList.length - 1) {
         this.colorIndex = 0;
@@ -323,6 +328,8 @@ export class HomeComponent implements OnInit {
       this.stations = this.stations.filter(x => x.line !== lineName);
       this.datasets = this.datasets.filter(x => x.selectedLine !== lineName);
       this.marcheNames = this.marcheNames.filter(x => x.lineName !== lineName);
+      this.walk = this.walk.filter(x => x.line !== lineName);
+      console.log(this.walk)
       this.chart.update();
     }
   }
@@ -412,7 +419,7 @@ export class HomeComponent implements OnInit {
       marchNames
     } = this.homeService.getInitialTraces(this.data, this._selectedLine, colorList[this.colorIndex]);
     traces.forEach((trace: any) => {
-      this.walk.push({ line: selectedLine, walk: trace.label, stations: trace.data.slice(0) });
+      this.walk.push({ color: colorList[this.colorIndex], line: selectedLine, walk: trace.label, stations: trace.data.slice(0) });
     });
     this.marcheNames.push({ lineName: selectedLine, marcheNames: marchNames });
     this.stations.push({ line: selectedLine, stations: stations.map(station => station.name) });
