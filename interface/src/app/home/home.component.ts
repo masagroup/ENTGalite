@@ -8,7 +8,7 @@ import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.ser
 import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
-const colorList = ['#ffff00', '#008000', '#f23320', '#1d1cf2', '#4ef2f5', '#db59f5', '#0000'];
+const colorList = ['#6E1E78', '#E05206', '#82BE00', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#D2E100', '#0088CE'];
 
 function line_intersect(
   x1: number,
