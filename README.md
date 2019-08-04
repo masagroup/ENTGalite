@@ -16,6 +16,7 @@ cd interface
 npm install
 ```
 
+Starting project: 
 ```bash
 cd interface 
 npm start
