@@ -17,9 +17,10 @@ npm install
 ```
 
 ```bash
+cd interface 
 npm start
 ```
-
+Open new terminal at the root of the repository
 ```bash
 python main.py true
 ```
