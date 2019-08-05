@@ -52,7 +52,6 @@ $md-mcgpalette0: (
 // hue.
 $primary: mat-palette($md-mcgpalette0, 600, 400, 900);
 $accent: mat-palette($md-mcgpalette0, 500, 200, 700);
-$background-color: rgb(0, 0, 0);
 
 // The warn palette is optional (defaults to red).
 $warn: mat-palette($mat-blue);

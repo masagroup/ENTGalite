@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "ng": "ng",
-    "build": "npm run env -s && ng build --prod",
+    "build": "npm run env -s && ng build --prod --optimization=false",
     "start": "npm run env -s && ng serve --aot",
     "lint": "ng lint && stylelint \"src/**/*.scss\" --syntax scss && htmlhint \"src\" --config .htmlhintrc",
     "translations:extract": "ngx-translate-extract --input ./src --output ./src/translations/template.json --format=json --clean --sort --marker extract",
     "compodoc": "compodoc -p src/tsconfig.app.json -d docs/generated -s -o",
     "env": "ngx-scripts env npm_package_version",
-    "prettier": "prettier --write \"./src/**/*.{ts,js,html,scss}\"",
+    "prettier": "prettier --write \"./src/**/*.{ts,js,html,scss}\" \"*.{js,json}\"",
     "prettier:check": "prettier --list-different \"./src/**/*.{ts,js,html,scss}\"",
     "postinstall": "npm run prettier -s",
     "generate": "ng generate"
@@ -45,6 +45,7 @@
     "zone.js": "~0.10.0"
   },
   "devDependencies": {
+    "@angular-builders/custom-webpack": "^8.1.0",
     "@angular-devkit/build-angular": "^0.801.2",
     "@angular/cli": "~8.1.2",
     "@angular/compiler-cli": "^8.1.3",

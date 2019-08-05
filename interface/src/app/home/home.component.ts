@@ -172,8 +172,8 @@ export class HomeComponent implements OnInit {
         return;
       }
       console.log(position);
-      
-      const testDist = getDistanceFromLatLonInKm(position.point.x, position.point.y, coordTrain.x, coordTrain.y)
+
+      const testDist = getDistanceFromLatLonInKm(position.point.x, position.point.y, coordTrain.x, coordTrain.y);
       if (!bestStations || testDist < minDist) {
         minDist = testDist;
         bestStations = position;
@@ -195,7 +195,7 @@ export class HomeComponent implements OnInit {
         parseFloat(bestStations.point.y)
       );
       const percent = (100 * dist) / totalDist;
-      const y = stations1.y + (((stations2.y - stations1.y) / 100) * (percent));
+      const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
       const _datasets = this.chart.chart.data.datasets;
       const indexRealTime = _datasets.findIndex((x: any) => x.label === dataSplited[0] && !x.prediction);
       if (indexRealTime === -1) {
@@ -210,7 +210,7 @@ export class HomeComponent implements OnInit {
           borderWidth: 3,
           prediction: false
         });
-        console.log(walk.color)
+        console.log(walk.color);
       } else {
         // @ts-ignore
         _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
@@ -296,7 +296,12 @@ export class HomeComponent implements OnInit {
       this.marcheNames.push({ lineName: lineName, marcheNames: marchNames });
       this.stations.push({ line: lineName, stations: stations.map(station => station.name) });
       traces.forEach((trace: any) => {
-      this.walk.push({ color: colorList[this.colorIndex], line: lineName, walk: trace.label, stations: trace.data.slice(0) });
+        this.walk.push({
+          color: colorList[this.colorIndex],
+          line: lineName,
+          walk: trace.label,
+          stations: trace.data.slice(0)
+        });
       });
       this.colorIndex += 1;
       if (this.colorIndex === colorList.length - 1) {
@@ -329,7 +334,7 @@ export class HomeComponent implements OnInit {
       this.datasets = this.datasets.filter(x => x.selectedLine !== lineName);
       this.marcheNames = this.marcheNames.filter(x => x.lineName !== lineName);
       this.walk = this.walk.filter(x => x.line !== lineName);
-      console.log(this.walk)
+      console.log(this.walk);
       this.chart.update();
     }
   }
@@ -419,7 +424,12 @@ export class HomeComponent implements OnInit {
       marchNames
     } = this.homeService.getInitialTraces(this.data, this._selectedLine, colorList[this.colorIndex]);
     traces.forEach((trace: any) => {
-      this.walk.push({ color: colorList[this.colorIndex], line: selectedLine, walk: trace.label, stations: trace.data.slice(0) });
+      this.walk.push({
+        color: colorList[this.colorIndex],
+        line: selectedLine,
+        walk: trace.label,
+        stations: trace.data.slice(0)
+      });
     });
     this.marcheNames.push({ lineName: selectedLine, marcheNames: marchNames });
     this.stations.push({ line: selectedLine, stations: stations.map(station => station.name) });

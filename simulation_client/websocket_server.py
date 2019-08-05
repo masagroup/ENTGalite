@@ -119,7 +119,7 @@ def start_app(develop):
         app = None
         page = {'port': 4200}
     else:
-        directory = '../interface/build/'
+        directory = './interface/dist/'
         app = 'chrome-app'
         page = 'index.html'
     eel.init(directory, ['.js', '.ts', '.html'])
