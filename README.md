@@ -37,7 +37,12 @@ Python and node.js is required for this project
 Dependencies installation
 ```bash
 pip install  -r requirements.txt
+cd interface
+npm install
+npm run-script build
 ```
+
+Launching Project
 
 ```bash
 python main.py
