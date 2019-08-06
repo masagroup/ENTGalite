@@ -171,8 +171,6 @@ export class HomeComponent implements OnInit {
       if (Number.isNaN(position.t)) {
         return;
       }
-      console.log(position);
-
       const testDist = getDistanceFromLatLonInKm(position.point.x, position.point.y, coordTrain.x, coordTrain.y);
       if (!bestStations || testDist < minDist) {
         minDist = testDist;
@@ -210,13 +208,12 @@ export class HomeComponent implements OnInit {
           borderWidth: 3,
           prediction: false
         });
-        console.log(walk.color);
       } else {
         // @ts-ignore
         _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
       }
-      console.log(stations1.coord, stations2.coord, bestStations.point, y, stations1.y, stations2.y);
-      console.log(dist, totalDist, percent, dataSplited);
+      //console.log(stations1.coord, stations2.coord, bestStations.point, y, stations1.y, stations2.y);
+      //console.log(dist, totalDist, percent, dataSplited);
     }
   }
 
@@ -231,35 +228,11 @@ export class HomeComponent implements OnInit {
         y: this.maxStation
       }
     ];
-    const _datasets = this.chart.chart.data.datasets;
-    const indexRealTime = _datasets.findIndex(x => x.label === 'REAL TIME');
+    const _datasets: any = this.chart.chart.data.datasets;
+    const indexRealTime = _datasets.findIndex((x: any) => x.realTime === true);
     if (indexRealTime !== -1) {
       _datasets.splice(indexRealTime, 1);
     }
-    _datasets.forEach((element: any, index: number) => {
-      if (element.prediction === true) {
-        if (element.data[element.data.length - 1].x < this.simTime.getTime()) {
-          _datasets.splice(index, 1);
-        }
-        if (element.data[0] && element.data[0].x < this.simTime.getTime()) {
-          const higherIndex = element.data.findIndex((x: any) => x.x > this.simTime.getTime());
-          if (element.data[higherIndex - 1]) {
-            const intersect = line_intersect(
-              element.data[higherIndex - 1].x,
-              element.data[higherIndex - 1].y,
-              element.data[higherIndex].x,
-              element.data[higherIndex].y,
-              data[0].x,
-              data[0].y,
-              data[1].x,
-              data[1].y
-            );
-            element.data.splice(0, element.data.length - (element.data.length - higherIndex));
-            element.data.unshift({ x: intersect.x, y: intersect.y });
-          }
-        }
-      }
-    });
     if (data[0].x < this.chart.chart.options.plugins.zoom.pan.rangeMin.x) {
       this.chart.chart.options.plugins.zoom.pan.rangeMin.x = data[0].x;
       this.chart.chart.options.plugins.zoom.zoom.rangeMin.x = data[0].x;
@@ -270,12 +243,13 @@ export class HomeComponent implements OnInit {
     }
     _datasets.push({
       type: 'scatter',
-      label: 'REAL TIME',
+      label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
       data: data,
       showLine: true,
       borderColor: 'black',
       pointRadius: 0,
-      borderWidth: 1
+      borderWidth: 1,
+      realTime: true
     });
     this.chart.chart.update();
   }
@@ -284,6 +258,15 @@ export class HomeComponent implements OnInit {
     if (!this.datasets) {
       this.selectedLine = lineName;
     } else if (event.checked) {
+      let color;
+      this.datasets.forEach(dataset => {
+        if (dataset.selectedLine === lineName) {
+          color = dataset.borderColor;
+        }
+      })
+      if (!color) {
+        color = colorList[this.colorIndex];;
+      }
       const {
         traces,
         stations,
@@ -292,16 +275,29 @@ export class HomeComponent implements OnInit {
         minStation,
         maxStation,
         marchNames
-      } = this.homeService.getInitialTraces(this.data, lineName, colorList[this.colorIndex]);
+      } = this.homeService.getInitialTraces(this.data, lineName, color);
       this.marcheNames.push({ lineName: lineName, marcheNames: marchNames });
       this.stations.push({ line: lineName, stations: stations.map(station => station.name) });
-      traces.forEach((trace: any) => {
-        this.walk.push({
-          color: colorList[this.colorIndex],
-          line: lineName,
-          walk: trace.label,
-          stations: trace.data.slice(0)
+      let found = false;
+      this.walk.forEach(walk => {
+        if (walk.line === lineName) {
+          found = true;
+        }
+      });
+      if (!found) {
+        traces.forEach((trace: any) => {
+          this.walk.push({
+            color: colorList[this.colorIndex],
+            line: lineName,
+            walk: trace.label,
+            stations: trace.data.slice(0)
+          });
         });
+      }
+      this.datasets.forEach(dataset => {
+        if (dataset.selectedLine === lineName && dataset.hidden === true) {
+          dataset.hidden = false;
+        }
       });
       this.colorIndex += 1;
       if (this.colorIndex === colorList.length - 1) {
@@ -331,10 +327,22 @@ export class HomeComponent implements OnInit {
         }
       });
       this.stations = this.stations.filter(x => x.line !== lineName);
-      this.datasets = this.datasets.filter(x => x.selectedLine !== lineName);
+      this.datasets = this.datasets.filter(x => {
+        if (x.selectedLine !== lineName) {
+          return true;
+        } 
+        if (x.selectedLine === lineName && x.prediction !== true) {
+          return true;
+        }
+        return false;}
+        );
+      this.datasets.forEach(dataset => {
+        if (dataset.selectedLine === lineName) {
+          dataset.hidden = true;
+        }
+      });
       this.marcheNames = this.marcheNames.filter(x => x.lineName !== lineName);
-      this.walk = this.walk.filter(x => x.line !== lineName);
-      console.log(this.walk);
+      //this.walk = this.walk.filter(x => x.line !== lineName);
       this.chart.update();
     }
   }
@@ -347,7 +355,9 @@ export class HomeComponent implements OnInit {
     let change = false;
     this.intersect.forEach(intersect => {
       change = true;
-      _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
+      if (_datasets[intersect.datasetIndex]) {
+        _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
+      }
     });
     this.intersect = [];
     this.datasets.forEach((dataset: any, index: number) => {
@@ -377,7 +387,7 @@ export class HomeComponent implements OnInit {
       }
       for (let i = dataset.data.length - 1; i > 1; i--) {
         if (dataset.data[i].x > max && dataset.data[i - 1].x < max) {
-          const intersect = line_intersect(
+          const intersect: any = line_intersect(
             dataset.data[i].x,
             dataset.data[i].y,
             dataset.data[i - 1].x,
@@ -389,6 +399,10 @@ export class HomeComponent implements OnInit {
           );
           this.intersect.push({ datasetIndex: index, dataIndex: i });
           change = true;
+          console.log(intersect.y, intersect.x, typeof intersect.x);
+          if (typeof intersect.x === "string") {
+            continue
+          }
           _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;
         }
@@ -597,6 +611,14 @@ export class HomeComponent implements OnInit {
               if (intersect.dataIndex === context.dataIndex && intersect.datasetIndex === context.datasetIndex) {
                 return true;
               }
+            }
+            if (
+              this.simTime &&
+              context.dataIndex === 0 &&
+              context.dataset.prediction &&
+              this.simTime.getTime() === context.dataset.data[context.dataIndex].x
+            ) {
+              return false;
             }
             return context.dataIndex === 0 || context.dataIndex === context.dataset.data.length - 1;
           }
