@@ -233,30 +233,6 @@ export class HomeComponent implements OnInit {
     if (indexRealTime !== -1) {
       _datasets.splice(indexRealTime, 1);
     }
-    _datasets.forEach((element: any, index: number) => {
-      if (element.prediction === true) {
-        if (element.data[element.data.length - 1].x < this.simTime.getTime()) {
-          _datasets.splice(index, 1);
-        }
-        if (element.data[0] && element.data[0].x < this.simTime.getTime()) {
-          const higherIndex = element.data.findIndex((x: any) => x.x > this.simTime.getTime());
-          if (element.data[higherIndex - 1]) {
-            const intersect = line_intersect(
-              element.data[higherIndex - 1].x,
-              element.data[higherIndex - 1].y,
-              element.data[higherIndex].x,
-              element.data[higherIndex].y,
-              data[0].x,
-              data[0].y,
-              data[1].x,
-              data[1].y
-            );
-            element.data.splice(0, element.data.length - (element.data.length - higherIndex));
-            element.data.unshift({ x: intersect.x, y: intersect.y });
-          }
-        }
-      }
-    });
     if (data[0].x < this.chart.chart.options.plugins.zoom.pan.rangeMin.x) {
       this.chart.chart.options.plugins.zoom.pan.rangeMin.x = data[0].x;
       this.chart.chart.options.plugins.zoom.zoom.rangeMin.x = data[0].x;
