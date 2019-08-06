@@ -379,7 +379,9 @@ export class HomeComponent implements OnInit {
     let change = false;
     this.intersect.forEach(intersect => {
       change = true;
-      _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
+      if (_datasets[intersect.datasetIndex]) {
+        _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
+      }
     });
     this.intersect = [];
     this.datasets.forEach((dataset: any, index: number) => {
@@ -409,7 +411,7 @@ export class HomeComponent implements OnInit {
       }
       for (let i = dataset.data.length - 1; i > 1; i--) {
         if (dataset.data[i].x > max && dataset.data[i - 1].x < max) {
-          const intersect = line_intersect(
+          const intersect: any = line_intersect(
             dataset.data[i].x,
             dataset.data[i].y,
             dataset.data[i - 1].x,
@@ -421,6 +423,10 @@ export class HomeComponent implements OnInit {
           );
           this.intersect.push({ datasetIndex: index, dataIndex: i });
           change = true;
+          console.log(intersect.y, intersect.x, typeof intersect.x);
+          if (typeof intersect.x === "string") {
+            continue
+          }
           _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;
         }
