@@ -21,15 +21,8 @@
             "main": "src/main.ts",
             "tsConfig": "src/tsconfig.app.json",
             "polyfills": "src/polyfills.ts",
-            "assets": [
-              "src/favicon.ico",
-              "src/apple-touch-icon.png",
-              "src/robots.txt",
-              "src/assets"
-            ],
-            "styles": [
-              "src/main.scss"
-            ],
+            "assets": ["src/favicon.ico", "src/apple-touch-icon.png", "src/robots.txt", "src/assets"],
+            "styles": ["src/main.scss"],
             "scripts": []
           },
           "configurations": {
@@ -85,12 +78,8 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "src/tsconfig.app.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
+            "tsConfig": ["src/tsconfig.app.json"],
+            "exclude": ["**/node_modules/**"]
           }
         }
       }
