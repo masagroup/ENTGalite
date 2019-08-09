@@ -263,9 +263,9 @@ export class HomeComponent implements OnInit {
         if (dataset.selectedLine === lineName) {
           color = dataset.borderColor;
         }
-      })
+      });
       if (!color) {
-        color = colorList[this.colorIndex];;
+        color = colorList[this.colorIndex];
       }
       const {
         traces,
@@ -330,12 +330,12 @@ export class HomeComponent implements OnInit {
       this.datasets = this.datasets.filter(x => {
         if (x.selectedLine !== lineName) {
           return true;
-        } 
+        }
         if (x.selectedLine === lineName && x.prediction !== true) {
           return true;
         }
-        return false;}
-        );
+        return false;
+      });
       this.datasets.forEach(dataset => {
         if (dataset.selectedLine === lineName) {
           dataset.hidden = true;
@@ -400,8 +400,8 @@ export class HomeComponent implements OnInit {
           this.intersect.push({ datasetIndex: index, dataIndex: i });
           change = true;
           console.log(intersect.y, intersect.x, typeof intersect.x);
-          if (typeof intersect.x === "string") {
-            continue
+          if (typeof intersect.x === 'string') {
+            continue;
           }
           _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;

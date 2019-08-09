@@ -95,26 +95,37 @@ class TestFactory(P.SWFactory):
     def __init__(self, phybdd, login):
         super().__init__(phybdd, login, protocol=TestProtocol)
 
-def start_connection(ip="46.218.153.46", port=10168):
+def start_connection(config):
     asyncio.set_event_loop(asyncio.new_event_loop())
-    conf = pysw.config.default
-    pysw.config.default.root_dir = "C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2" 
-    conf.server_name_or_ip = ip
+##    conf = pysw.config.default
+##    pysw.config.default.root_dir = "C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2" 
+##    conf.server_name_or_ip = ip
 
     # # le port est fournitadmin pour session "test ENTGalite" (http://46.218.153.46:8080/sncf/)
-    conf.port_sim = port
-    conf.data_set = "SNCF"
-    pysw.physical.install_importer(conf)
+##    conf.port_sim = port
+    config.data_set = "SNCF"
+    pysw.physical.install_importer(config)
 
-    import sys
-    sys.path.append("C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2\data\models\SNCF\physical")
+##    import sys
+##    sys.path.append("C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2\data\models\SNCF\physical")
     import sncf
-    F = TestFactory(sncf, "admin")
-    pysw.app.connect(sim_factory=F, timeline_factory=None)
+    F = TestFactory(sncf, config.login)
+    pysw.app.connect(config, sim_factory=F, timeline_factory=None)
 
 def start_app(develop):
     """Start Eel with either production or development configuration."""
-    if develop:
+    args = pysw.config.cmd_line_options("--dev",
+                                        help="???",
+                                        dest="dev", type=bool,
+                                        default=False,
+                                        const=True, nargs='?'
+                                        )
+    develop = args.dev
+    conf = pysw.config.create_config_from_cmd_args(args)
+##    import sys
+##    sys.exit()
+
+    if args.dev:
         directory = './interface/src'
         app = None
         page = {'port': 4200}
@@ -129,7 +140,7 @@ def start_app(develop):
         port=8000,
         size=(1280, 800),
     )
-    t = threading.Thread(target=start_connection)
+    t = threading.Thread(target=start_connection, args=[conf])
     t.daemon = False
     t.start()
     try:

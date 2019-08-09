@@ -23,8 +23,22 @@ npm start
 ```
 Open new terminal at the root of the repository
 ```bash
-python main.py true
+python main.py --dev
 ```
+for dev with default config.
+You can change *root_dir*, *ip* and *port* for simulation connexion with:
+```bash
+python main.py --dev --host 172.19.2.91 --sim-port 10168 --root-dir="C:\ProgramData\MASA Group\SWORD Client\bin\_\3"
+```
+root_dir means "where data have been downloaded or installed":
+* With SWORD admin, data are usally in <where SWORD Client is installed>/bin/_/<a number>. Find where is physcal data base *SNCF*.
+* With selftraining, *root_dir* is given by admin>Settings>Data directory in the frontend.
+
+Please launch:
+```bash
+python main.py -h
+```
+for more usage options.
 
 ## Installation Production
 
@@ -47,3 +61,9 @@ Launching Project
 ```bash
 python main.py
 ```
+or
+```bash
+python main.py -h
+```
+to see explicit others options
+
