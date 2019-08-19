@@ -8,6 +8,17 @@ import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.ser
 import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
+Chart.pluginService.register({
+  beforeDraw: function(chart) {
+    var ctx = chart.ctx;
+    var chartArea = chart.chartArea;
+
+    ctx.save();
+    ctx.fillStyle = '#a0a0a0';
+    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+    ctx.restore();
+  }
+});
 const colorList = ['#6E1E78', '#E05206', '#82BE00', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#D2E100', '#0088CE'];
 
 function line_intersect(
@@ -40,41 +51,6 @@ function line_intersect(
 interface Point {
   x: number;
   y: number;
-}
-function project(p: Point, a: Point, b: Point) {
-  var atob = { x: b.x - a.x, y: b.y - a.y };
-  var atop = { x: p.x - a.x, y: p.y - a.y };
-  var len = atob.x * atob.x + atob.y * atob.y;
-  var dot = atop.x * atob.x + atop.y * atob.y;
-  var t = Math.min(1, Math.max(0, dot / len));
-
-  dot = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
-
-  return {
-    point: {
-      x: a.x + atob.x * t,
-      y: a.y + atob.y * t
-    },
-    left: dot < 1,
-    dot: dot,
-    t: t
-  };
-}
-
-function deg2rad(deg: number) {
-  return deg * (Math.PI / 180);
-}
-
-function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  var R = 6371;
-  var dLat = deg2rad(lat2 - lat1);
-  var dLon = deg2rad(lon2 - lon1);
-  var a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var d = R * c; // Distance in km
-  return d;
 }
 
 @Component({
@@ -167,11 +143,16 @@ export class HomeComponent implements OnInit {
         x: parseFloat(walk.stations[i + 1].coord.lat),
         y: parseFloat(walk.stations[i + 1].coord.lon)
       };
-      const position = project(coordTrain, coord1, coord2);
+      const position = this.homeService.project(coordTrain, coord1, coord2);
       if (Number.isNaN(position.t)) {
         return;
       }
-      const testDist = getDistanceFromLatLonInKm(position.point.x, position.point.y, coordTrain.x, coordTrain.y);
+      const testDist = this.homeService.getDistanceFromLatLonInKm(
+        position.point.x,
+        position.point.y,
+        coordTrain.x,
+        coordTrain.y
+      );
       if (!bestStations || testDist < minDist) {
         minDist = testDist;
         bestStations = position;
@@ -180,13 +161,13 @@ export class HomeComponent implements OnInit {
       }
     });
     if (bestStations) {
-      const totalDist = getDistanceFromLatLonInKm(
+      const totalDist = this.homeService.getDistanceFromLatLonInKm(
         parseFloat(stations1.coord.lat),
         parseFloat(stations1.coord.lon),
         parseFloat(stations2.coord.lat),
         parseFloat(stations2.coord.lon)
       );
-      const dist = getDistanceFromLatLonInKm(
+      const dist = this.homeService.getDistanceFromLatLonInKm(
         parseFloat(stations1.coord.lat),
         parseFloat(stations1.coord.lon),
         parseFloat(bestStations.point.x),
@@ -263,9 +244,9 @@ export class HomeComponent implements OnInit {
         if (dataset.selectedLine === lineName) {
           color = dataset.borderColor;
         }
-      })
+      });
       if (!color) {
-        color = colorList[this.colorIndex];;
+        color = colorList[this.colorIndex];
       }
       const {
         traces,
@@ -330,12 +311,12 @@ export class HomeComponent implements OnInit {
       this.datasets = this.datasets.filter(x => {
         if (x.selectedLine !== lineName) {
           return true;
-        } 
+        }
         if (x.selectedLine === lineName && x.prediction !== true) {
           return true;
         }
-        return false;}
-        );
+        return false;
+      });
       this.datasets.forEach(dataset => {
         if (dataset.selectedLine === lineName) {
           dataset.hidden = true;
@@ -400,8 +381,8 @@ export class HomeComponent implements OnInit {
           this.intersect.push({ datasetIndex: index, dataIndex: i });
           change = true;
           console.log(intersect.y, intersect.x, typeof intersect.x);
-          if (typeof intersect.x === "string") {
-            continue
+          if (typeof intersect.x === 'string') {
+            continue;
           }
           _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;
