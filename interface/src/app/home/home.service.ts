@@ -30,7 +30,10 @@ export interface MarchesByLines {
   lines: Line[];
 }
 
-const colorList = ['#ffff00', '#3bf329', '#f23320', '#1d1cf2', '#4ef2f5', '#db59f5', '#0000'];
+interface Point {
+  x: number;
+  y: number;
+}
 
 Date.prototype.pad = function pad(number: number): string {
   if (number < 10) {
@@ -151,5 +154,41 @@ export class HomeService {
       });
     });
     return { traces, stations, minTime, maxTime, minStation, maxStation, marchNames };
+  }
+
+  project(p: Point, a: Point, b: Point) {
+    var atob = { x: b.x - a.x, y: b.y - a.y };
+    var atop = { x: p.x - a.x, y: p.y - a.y };
+    var len = atob.x * atob.x + atob.y * atob.y;
+    var dot = atop.x * atob.x + atop.y * atob.y;
+    var t = Math.min(1, Math.max(0, dot / len));
+
+    dot = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+
+    return {
+      point: {
+        x: a.x + atob.x * t,
+        y: a.y + atob.y * t
+      },
+      left: dot < 1,
+      dot: dot,
+      t: t
+    };
+  }
+
+  getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+    var R = 6371;
+    var dLat = this.deg2rad(lat2 - lat1);
+    var dLon = this.deg2rad(lon2 - lon1);
+    var a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    var d = R * c; // Distance in km
+    return d;
+  }
+
+  private deg2rad(deg: number) {
+    return deg * (Math.PI / 180);
   }
 }

@@ -1,0 +1,49 @@
+header { 
+	height: auto; 
+}
+main {
+	width: 95%;
+	margin: auto;
+	height: 85%
+}
+footer { height: 3%; }
+
+
+/* D�corations */
+
+body {
+	background-color: white; /* fond blanc */
+}
+
+/* ent�te en trois parties dont la centrale est extensible */
+header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+.hc1 {
+	order: 0;
+	flex: 0 1 20%;
+	align-self: flex-start;
+}
+
+.hc2 {
+	order: 1;
+	flex: 1 1 60%;
+	align-self: flex-start;
+	margin-left: 20px;
+	text-align:left;
+}
+
+p, h1, h2, h3, h4, h5, h6 { 
+	font-family: arial;
+	color: #0088CE; 
+}
+/* Pour avoir des images adaptatives ("responsive") */
+img {  
+	display: block;
+	margin: 0 auto;
+	max-width: 100%;
+}
