@@ -16,7 +16,12 @@ Chart.pluginService.register({
     ctx.save();
     ctx.fillStyle = '#a0a0a0';
     ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-    ctx.fillRect(0, ctx.canvas.height - (ctx.canvas.height - chartArea.bottom), chartArea.left, ctx.canvas.height - chartArea.bottom);
+    ctx.fillRect(
+      0,
+      ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
+      chartArea.left,
+      ctx.canvas.height - chartArea.bottom
+    );
     ctx.restore();
   }
 });
