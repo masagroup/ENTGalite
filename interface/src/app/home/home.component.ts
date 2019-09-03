@@ -4,7 +4,7 @@ import { FormControl } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 // @ts-ignore
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { HomeService, MarchesByLines, Line, Marche, StopPoint } from './home.service';
+import { HomeService, MarchesByLines, Line } from './home.service';
 import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
@@ -16,6 +16,7 @@ Chart.pluginService.register({
     ctx.save();
     ctx.fillStyle = '#a0a0a0';
     ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+    ctx.fillRect(0, ctx.canvas.height - (ctx.canvas.height - chartArea.bottom), chartArea.left, ctx.canvas.height - chartArea.bottom);
     ctx.restore();
   }
 });
@@ -193,8 +194,6 @@ export class HomeComponent implements OnInit {
         // @ts-ignore
         _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
       }
-      //console.log(stations1.coord, stations2.coord, bestStations.point, y, stations1.y, stations2.y);
-      //console.log(dist, totalDist, percent, dataSplited);
     }
   }
 
@@ -323,7 +322,6 @@ export class HomeComponent implements OnInit {
         }
       });
       this.marcheNames = this.marcheNames.filter(x => x.lineName !== lineName);
-      //this.walk = this.walk.filter(x => x.line !== lineName);
       this.chart.update();
     }
   }
