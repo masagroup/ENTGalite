@@ -7,8 +7,6 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line } from './home.service';
 import * as Chart from 'chart.js';
 
-
-
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
   beforeDraw: function(chart) {
