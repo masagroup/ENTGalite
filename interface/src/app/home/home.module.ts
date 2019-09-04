@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { ChartsModule } from 'ng2-charts';
-import { CoreModule } from '@app/core';
-import { SharedModule } from '@app/shared';
 import { MaterialModule } from '@app/material.module';
 import { MatFormFieldModule, MatInputModule } from '@angular/material';
 import { MaterialFileInputModule } from 'ngx-material-file-input';
@@ -17,8 +15,6 @@ import { HomeService } from './home.service';
   imports: [
     CommonModule,
     TranslateModule,
-    CoreModule,
-    SharedModule,
     FlexLayoutModule,
     MaterialModule,
     ReactiveFormsModule,
