@@ -188,16 +188,7 @@ export class HomeService {
     return d;
   }
 
-  line_intersect(
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
-    x3: number,
-    y3: number,
-    x4: number,
-    y4: number
-  ) {
+  line_intersect(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number) {
     let ua,
       ub,
       denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
@@ -213,7 +204,6 @@ export class HomeService {
       seg2: ub >= 0 && ub <= 1
     };
   }
-  
 
   private deg2rad(deg: number) {
     return deg * (Math.PI / 180);

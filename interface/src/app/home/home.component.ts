@@ -3,30 +3,41 @@ import { FormControl } from '@angular/forms';
 
 import { BaseChartDirective } from 'ng2-charts';
 // @ts-ignore
-import ChartDataLabels from 'chartjs-plugin-datalabels';
+import ChartDataLabels, { Context } from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line } from './home.service';
 import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
   beforeDraw: function(chart) {
-    var ctx = chart.ctx;
-    var chartArea = chart.chartArea;
+    const ctx = chart.ctx;
+    const chartArea = chart.chartArea;
 
     ctx.save();
-    ctx.fillStyle = '#a0a0a0';
-    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-    ctx.fillRect(
+    ctx.fillStyle = 'lightgray';
+    ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+    ctx.fill();
+    ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+    ctx.stroke()
+    ctx.rect(
       0,
       ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
       chartArea.left,
       ctx.canvas.height - chartArea.bottom
     );
+    ctx.fill();
+    ctx.rect(
+      0,
+      ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
+      chartArea.left,
+      ctx.canvas.height - chartArea.bottom
+    );
+    ctx.stroke();
+    ctx.save();
     ctx.restore();
   }
 });
 const colorList = ['#6E1E78', '#E05206', '#82BE00', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#D2E100', '#0088CE'];
-
 
 interface Point {
   x: number;
@@ -55,8 +66,8 @@ export class HomeComponent implements OnInit {
   simTime: Date;
   colorIndex = 0;
   options: any;
-  datasets: any[];
-  marcheNames: any[] = [];
+  datasets: Chart.ChartDataSets[];
+  marcheNames: { lineName: string; marcheNames: string[] }[] = [];
   maxStation: number;
   minTime: number;
   maxTime: number;
@@ -218,7 +229,7 @@ export class HomeComponent implements OnInit {
       this.selectedLine = lineName;
     } else if (event.checked) {
       let color;
-      this.datasets.forEach(dataset => {
+      this.datasets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
           color = dataset.borderColor;
         }
@@ -253,7 +264,7 @@ export class HomeComponent implements OnInit {
           });
         });
       }
-      this.datasets.forEach(dataset => {
+      this.datasets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName && dataset.hidden === true) {
           dataset.hidden = false;
         }
@@ -280,13 +291,13 @@ export class HomeComponent implements OnInit {
       if (this.colorIndex === colorList.length - 1) {
         this.colorIndex = 0;
       }
-      this.datasets.forEach((element, index) => {
+      this.datasets.forEach((element: any, index) => {
         if (element.selectedLine === lineName) {
           this.intersect = this.intersect.filter(x => x.dataIndex !== index);
         }
       });
       this.stations = this.stations.filter(x => x.line !== lineName);
-      this.datasets = this.datasets.filter(x => {
+      this.datasets = this.datasets.filter((x: any) => {
         if (x.selectedLine !== lineName) {
           return true;
         }
@@ -295,7 +306,7 @@ export class HomeComponent implements OnInit {
         }
         return false;
       });
-      this.datasets.forEach(dataset => {
+      this.datasets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
           dataset.hidden = true;
         }
@@ -345,7 +356,7 @@ export class HomeComponent implements OnInit {
       }
       for (let i = dataset.data.length - 1; i > 1; i--) {
         if (dataset.data[i].x > max && dataset.data[i - 1].x < max) {
-          const intersect: any = this.homeService.line_intersect(
+          const intersect = this.homeService.line_intersect(
             dataset.data[i].x,
             dataset.data[i].y,
             dataset.data[i - 1].x,
@@ -513,7 +524,7 @@ export class HomeComponent implements OnInit {
         },
         datalabels: {
           backgroundColor: 'transparent',
-          color: function(context: any) {
+          color: function(context: Context) {
             return context.dataset.borderColor;
           },
           borderRadius: 4,
@@ -522,7 +533,7 @@ export class HomeComponent implements OnInit {
             weight: 'bold',
             size: 14
           },
-          anchor: (context: any) => {
+          anchor: (context: Context | any) => {
             const dataIndex = context.dataIndex;
             if (context.dataset.data[dataIndex].x === minTime) {
               return 'end';
@@ -530,7 +541,7 @@ export class HomeComponent implements OnInit {
             return 'start';
           },
           clamp: true,
-          align: (context: any) => {
+          align: (context: Context | any) => {
             const dataIndex = context.dataIndex;
             const x = context.dataset.data[dataIndex].x;
             const y = context.dataset.data[dataIndex].y;
@@ -551,7 +562,7 @@ export class HomeComponent implements OnInit {
             }
             return 'left';
           },
-          formatter: function(value: any, context: any, t: any) {
+          formatter: function(value: any, context: Context | any) {
             return context.dataset.label;
           },
           display: (context: any) => {

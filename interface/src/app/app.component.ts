@@ -15,7 +15,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private titleService: Title,
-    private translateService: TranslateService,
+    private translateService: TranslateService
   ) {}
 
   ngOnInit() {
@@ -34,7 +34,7 @@ export class AppComponent implements OnInit, OnDestroy {
           return route;
         }),
         filter(route => route.outlet === 'primary'),
-        switchMap(route => route.data),
+        switchMap(route => route.data)
       )
       .subscribe(event => {
         const title = event['title'];
@@ -44,6 +44,5 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-  }
+  ngOnDestroy() {}
 }
