@@ -27,32 +27,6 @@ Chart.pluginService.register({
 });
 const colorList = ['#6E1E78', '#E05206', '#82BE00', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#D2E100', '#0088CE'];
 
-function line_intersect(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  x3: number,
-  y3: number,
-  x4: number,
-  y4: number
-) {
-  let ua,
-    ub,
-    // tslint:disable-next-line: prefer-const
-    denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-  if (denom === 0) {
-    return null;
-  }
-  ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
-  ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-  return {
-    x: x1 + ua * (x2 - x1),
-    y: y1 + ua * (y2 - y1),
-    seg1: ua >= 0 && ua <= 1,
-    seg2: ub >= 0 && ub <= 1
-  };
-}
 
 interface Point {
   x: number;
@@ -353,7 +327,7 @@ export class HomeComponent implements OnInit {
       }
       for (let i = 0; i < dataset.data.length - 1; i++) {
         if (dataset.data[i].x < min && dataset.data[i + 1].x > min) {
-          const intersect = line_intersect(
+          const intersect = this.homeService.line_intersect(
             dataset.data[i].x,
             dataset.data[i].y,
             dataset.data[i + 1].x,
@@ -371,7 +345,7 @@ export class HomeComponent implements OnInit {
       }
       for (let i = dataset.data.length - 1; i > 1; i--) {
         if (dataset.data[i].x > max && dataset.data[i - 1].x < max) {
-          const intersect: any = line_intersect(
+          const intersect: any = this.homeService.line_intersect(
             dataset.data[i].x,
             dataset.data[i].y,
             dataset.data[i - 1].x,
@@ -383,7 +357,6 @@ export class HomeComponent implements OnInit {
           );
           this.intersect.push({ datasetIndex: index, dataIndex: i });
           change = true;
-          console.log(intersect.y, intersect.x, typeof intersect.x);
           if (typeof intersect.x === 'string') {
             continue;
           }
