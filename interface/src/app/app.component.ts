@@ -5,11 +5,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { merge } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
 
-import { environment } from '@env/environment';
-import { Logger, I18nService, untilDestroyed } from '@app/core';
-
-const log = new Logger('App');
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -21,19 +16,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private titleService: Title,
     private translateService: TranslateService,
-    private i18nService: I18nService
   ) {}
 
   ngOnInit() {
     // Setup logger
-    if (environment.production) {
-      Logger.enableProductionMode();
-    }
-
-    log.debug('init');
-
-    // Setup translations
-    this.i18nService.init(environment.defaultLanguage, environment.supportedLanguages);
 
     const onNavigationEnd = this.router.events.pipe(filter(event => event instanceof NavigationEnd));
 
@@ -49,7 +35,6 @@ export class AppComponent implements OnInit, OnDestroy {
         }),
         filter(route => route.outlet === 'primary'),
         switchMap(route => route.data),
-        untilDestroyed(this)
       )
       .subscribe(event => {
         const title = event['title'];
@@ -60,6 +45,5 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.i18nService.destroy();
   }
 }
