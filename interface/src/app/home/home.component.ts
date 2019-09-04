@@ -12,9 +12,9 @@ Chart.pluginService.register({
   beforeDraw: function(chart) {
     const ctx = chart.ctx;
     const chartArea = chart.chartArea;
-
     ctx.save();
     ctx.fillStyle = 'lightgray';
+    ctx.strokeStyle = 'black';
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
     ctx.fill();
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
@@ -33,11 +33,10 @@ Chart.pluginService.register({
       ctx.canvas.height - chartArea.bottom
     );
     ctx.stroke();
-    ctx.save();
     ctx.restore();
   }
 });
-const colorList = ['#6E1E78', '#E05206', '#82BE00', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#D2E100', '#0088CE'];
+const colorList = ['#6E1E78', '#E05206', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#0088CE'];
 
 interface Point {
   x: number;
@@ -482,15 +481,22 @@ export class HomeComponent implements OnInit {
               padding: 50,
               callback: (value: number, index: number) => {
                 let stationsLabel: string;
+                let firstStation: string;
+                let lastStation: string;
                 this.stations.forEach(station => {
                   if (station.stations[value]) {
                     if (!stationsLabel) {
                       stationsLabel = station.stations[value];
+                      firstStation = station.stations[value];
                     } else {
                       stationsLabel += ' / ' + station.stations[value];
+                      lastStation = station.stations[value];
                     }
                   }
                 });
+                if (stationsLabel && stationsLabel.length > 40) {
+                  stationsLabel = firstStation + '...' + lastStation;
+                }
                 return stationsLabel;
               }
             }
