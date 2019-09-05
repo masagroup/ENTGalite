@@ -2,12 +2,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 import { BaseChartDirective } from 'ng2-charts';
+import { Context } from 'chartjs-plugin-datalabels';
 
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-
-// @ts-ignore
-import ChartDataLabels, { Context } from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line } from './home.service';
 import * as Chart from 'chart.js';
 
@@ -74,8 +70,6 @@ export class HomeComponent implements OnInit {
   maxStation: number;
   minTime: number;
   maxTime: number;
-  lastTime: number;
-  plugins = [ChartDataLabels];
   file: FormControl = new FormControl([]);
   @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
 

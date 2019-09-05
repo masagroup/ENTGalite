@@ -7,6 +7,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialModule } from './material.module';
 import 'chartjs-plugin-zoom';
 import 'chartjs-plugin-annotation';
+import 'chartjs-plugin-datalabels';
 
 import { HomeModule } from './home/home.module';
 import { AppComponent } from './app.component';
