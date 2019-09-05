@@ -1,29 +1,20 @@
-<div [hidden]="isLoading">
-  <div class="container">
-    <mat-form-field>
-      <ngx-mat-file-input [formControl]="file" placeholder="JSON Marches" [accept]="'.json'"></ngx-mat-file-input>
-      <mat-icon matSuffix>file</mat-icon>
-    </mat-form-field>
-  </div>
-
-  <div *ngIf="data" class="line-name-container">
-    <mat-checkbox
-      class="line-name-item"
-      *ngFor="let lineName of linesName"
-      value="{{ lineName }}"
-      (change)="selectLine(lineName, $event)"
-    >
-      {{ lineName }}
-    </mat-checkbox>
-  </div>
-  <div *ngIf="selectedLine" class="chart" style="margin-left: 10px; margin-right: 10px">
-    <canvas
-      style="border:1px solid"
-      baseChart
-      class="chart"
-      [chartType]="'scatter'"
-      [datasets]="datasets"
-      [options]="options"
-    ></canvas>
-  </div>
+<div class="line-name-container">
+  <mat-checkbox
+    class="line-name-item"
+    *ngFor="let lineName of linesName"
+    value="{{ lineName }}"
+    (change)="selectLine(lineName, $event)"
+  >
+    {{ lineName }}
+  </mat-checkbox>
+</div>
+<div *ngIf="selectedLine" class="chart" style="margin-left: 10px; margin-right: 10px">
+  <canvas
+    style="border:1px solid"
+    baseChart
+    class="chart"
+    [chartType]="'scatter'"
+    [datasets]="datasets"
+    [options]="options"
+  ></canvas>
 </div>

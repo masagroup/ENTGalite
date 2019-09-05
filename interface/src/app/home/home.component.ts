@@ -1,8 +1,10 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, NgZone } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 import { BaseChartDirective } from 'ng2-charts';
 import { Context } from 'chartjs-plugin-datalabels';
+import { ChangeDetectorRef } from '@angular/core';
+
 
 import { HomeService, MarchesByLines, Line } from './home.service';
 import * as Chart from 'chart.js';
@@ -49,7 +51,6 @@ interface Point {
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  isLoading = true;
   data: MarchesByLines;
   linesName: string[] = [];
   stations: { line: string; stations: string[] }[] = [];
@@ -73,16 +74,28 @@ export class HomeComponent implements OnInit {
   file: FormControl = new FormControl([]);
   @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
 
-  constructor(private homeService: HomeService) {}
+  constructor(private zone: NgZone, private homeService: HomeService) {}
 
   ngOnInit() {
     const eel = window.eel;
     eel.set_host('ws://localhost:8000');
+
     const UpdateTrain = (data: string) => {
       if (!this.chart || !this.chart.chart) {
         return;
       }
       this.updateTrain(data);
+    };
+    const ReceiveWalks = (walks: string) => {
+      this.zone.run(() => {
+      this.data = JSON.parse(walks);
+      this.linesName = this.data.lines.map((x: Line) => {
+        if (x.marches.length > 0) {
+          return x.line_name;
+        }
+      });
+      this.linesName = this.linesName.filter((x: string) => x);
+      })
     };
     const UpdateSimTime = (data: string) => {
       if (!this.chart || !this.chart.chart) {
@@ -93,21 +106,8 @@ export class HomeComponent implements OnInit {
     };
     eel.expose(UpdateTrain, 'update_train_js');
     eel.expose(UpdateSimTime, 'update_sim_time_js');
+    eel.receive_walks_from_py()(ReceiveWalks);
 
-    this.file.valueChanges.subscribe((files: any) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.data = JSON.parse(<string>reader.result);
-        this.linesName = this.data.lines.map((x: Line) => {
-          if (x.marches.length > 0) {
-            return x.line_name;
-          }
-        });
-        this.linesName = this.linesName.filter((x: string) => x);
-      };
-      reader.readAsText(files.files[0]);
-    });
-    this.isLoading = false;
   }
 
   private updateTrain(train: string) {
@@ -209,19 +209,19 @@ export class HomeComponent implements OnInit {
       this.chart.chart.options.plugins.zoom.pan.rangeMax.x = data[0].x;
       this.chart.chart.options.plugins.zoom.zoom.rangeMax.x = data[0].x;
     }
-    
-    this.chart.chart.config.options.scales.xAxes[0].time.min = 
-    this.chart.chart.config.options.scales.xAxes[0].time.max = 
-    _datasets.push({
-      type: 'scatter',
-      label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
-      data: data,
-      showLine: true,
-      borderColor: 'black',
-      pointRadius: 0,
-      borderWidth: 1,
-      realTime: true
-    });
+
+    this.chart.chart.config.options.scales.xAxes[0].time.min = this.chart.chart.config.options.scales.xAxes[0].time.max = _datasets.push(
+      {
+        type: 'scatter',
+        label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
+        data: data,
+        showLine: true,
+        borderColor: 'black',
+        pointRadius: 0,
+        borderWidth: 1,
+        realTime: true
+      }
+    );
     this.chart.chart.update();
   }
 
@@ -318,7 +318,6 @@ export class HomeComponent implements OnInit {
   }
 
   private updateInfo = (chart: any) => {
-    
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets = this.datasets;

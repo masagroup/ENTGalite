@@ -15,19 +15,24 @@ import json
 import pysw
 import eel
 from pprint import pprint
-# alias pour raccourcir l'ecriture 
+# alias pour raccourcir l'ecriture
 P = pysw.client_protocols
 
+WALKS = None
 
 def send_train_to_interface(train: str):
     """Send Time to interface in order to synchronize simulation and interface"""
-    print(train)
     eel.update_train_js(train)
-
 
 def send_time_to_interface(date: str):
     """Send Time to interface in order to synchronize simulation and interface"""
     eel.update_sim_time_js(date)
+
+@eel.expose
+def receive_walks_from_py() -> str:
+    """Send walks json to interface """
+    print(WALKS[0:100])
+    return WALKS
 
 class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
     """
@@ -36,12 +41,13 @@ class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
     peut être pllus clair ensuite.
     """
 
+
     def is_train(self, unit):
         return isinstance(unit, self.bdd.pawns.TRAIN_Tgv) or isinstance(unit, self.bdd.pawns.TRAIN_Diesel)
 
     def OnReceived_ControlSendCurrentStateBegin(self, msg):
-        self.bdd = self.factory.physical_base        
-    
+        self.bdd = self.factory.physical_base
+
     def OnReceived_ControlSendCurrentStateEnd(self, msg):
         super().OnReceived_ControlSendCurrentStateEnd(msg)
         U = self.units_by_id
@@ -72,12 +78,12 @@ class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
         pass
     def OnDelete_train(self, deleted_train):
         pass
-    
+
 class TestProtocol(TrainProtocol):
 
     def OnReceived_ControlBeginTick(self, msg):
         send_time_to_interface(msg.date_time.data)
-        
+
 
     def OnReceived_ControlEndTick(self, msg):
         pass
@@ -104,15 +110,16 @@ def start_connection(config):
     F = TestFactory(sncf, config.login)
     pysw.app.connect(config, sim_factory=F, timeline_factory=None)
 
-def start_app(develop):
+def start_app(walks):
     """Start Eel with either production or development configuration."""
+    global WALKS
+    WALKS = walks
     args = pysw.config.cmd_line_options("--dev",
                                         help="???",
                                         dest="dev", type=bool,
                                         default=False,
                                         const=True, nargs='?'
                                         )
-    develop = args.dev
     conf = pysw.config.create_config_from_cmd_args(args)
 
     if args.dev:

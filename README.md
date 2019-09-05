@@ -28,7 +28,7 @@ python main.py --dev
 for dev with default config.
 You can change *root_dir*, *ip* and *port* for simulation connexion with:
 ```bash
-python main.py --dev --host 172.19.2.91 --sim-port 10168 --root-dir="C:\ProgramData\MASA Group\SWORD Client\bin\_\3"
+python main.py --dev --host 172.19.2.91 --sim-port 10168 --root-dir="C:\ProgramData\MASA Group\SWORD Client\bin\_\3"  --walks '..\Downloads\marches_by_lines.json'
 ```
 root_dir means "where data have been downloaded or installed":
 * With SWORD admin, data are usally in <where SWORD Client is installed>/bin/_/<a number>. Find where is physcal data base *SNCF*.
