@@ -2,6 +2,10 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 import { BaseChartDirective } from 'ng2-charts';
+
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+
 // @ts-ignore
 import ChartDataLabels, { Context } from 'chartjs-plugin-datalabels';
 import { HomeService, MarchesByLines, Line } from './home.service';
@@ -70,6 +74,7 @@ export class HomeComponent implements OnInit {
   maxStation: number;
   minTime: number;
   maxTime: number;
+  lastTime: number;
   plugins = [ChartDataLabels];
   file: FormControl = new FormControl([]);
   @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
@@ -210,6 +215,9 @@ export class HomeComponent implements OnInit {
       this.chart.chart.options.plugins.zoom.pan.rangeMax.x = data[0].x;
       this.chart.chart.options.plugins.zoom.zoom.rangeMax.x = data[0].x;
     }
+    
+    this.chart.chart.config.options.scales.xAxes[0].time.min = 
+    this.chart.chart.config.options.scales.xAxes[0].time.max = 
     _datasets.push({
       type: 'scatter',
       label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
@@ -316,6 +324,7 @@ export class HomeComponent implements OnInit {
   }
 
   private updateInfo = (chart: any) => {
+    
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets = this.datasets;
@@ -514,7 +523,7 @@ export class HomeComponent implements OnInit {
             rangeMax: {
               x: maxTime
             },
-            onPan: this.updateInfo
+            onPanComplete: this.updateInfo
           },
           zoom: {
             enabled: true,
