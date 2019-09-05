@@ -328,7 +328,6 @@ export class HomeComponent implements OnInit {
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets = this.datasets;
-    const _options = this.options;
     let change = false;
     this.intersect.forEach(intersect => {
       change = true;
@@ -534,7 +533,7 @@ export class HomeComponent implements OnInit {
             rangeMax: {
               x: maxTime
             },
-            onZoom: this.updateInfo
+            onZoomComplete: this.updateInfo
           }
         },
         datalabels: {
