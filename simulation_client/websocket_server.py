@@ -10,7 +10,6 @@ import asyncio
 import eel
 import json
 
-# encoding utf-8
 
 import pysw
 import eel

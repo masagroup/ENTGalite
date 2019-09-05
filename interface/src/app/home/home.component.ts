@@ -207,8 +207,7 @@ export class HomeComponent implements OnInit {
       this.chart.chart.options.plugins.zoom.pan.rangeMax.x = data[0].x;
       this.chart.chart.options.plugins.zoom.zoom.rangeMax.x = data[0].x;
     }
-
-    this.chart.chart.config.options.scales.xAxes[0].time.min = this.chart.chart.config.options.scales.xAxes[0].time.max = _datasets.push(
+  _datasets.push(
       {
         type: 'scatter',
         label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
