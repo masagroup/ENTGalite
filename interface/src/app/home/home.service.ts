@@ -86,7 +86,6 @@ export class HomeService {
   }
 
   getInitialTraces(data: MarchesByLines, selectedLine: string, color: string) {
-    const date = this.parseDateTime(data['date_time']);
     const line = data.lines.find((x: Line) => x.line_name === selectedLine);
     const stations: Station[] = line.stations;
     const traces: any[] = [];

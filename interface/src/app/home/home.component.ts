@@ -5,7 +5,6 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Context } from 'chartjs-plugin-datalabels';
 import { ChangeDetectorRef } from '@angular/core';
 
-
 import { HomeService, MarchesByLines, Line } from './home.service';
 import * as Chart from 'chart.js';
 
@@ -88,14 +87,14 @@ export class HomeComponent implements OnInit {
     };
     const ReceiveWalks = (walks: string) => {
       this.zone.run(() => {
-      this.data = JSON.parse(walks);
-      this.linesName = this.data.lines.map((x: Line) => {
-        if (x.marches.length > 0) {
-          return x.line_name;
-        }
+        this.data = JSON.parse(walks);
+        this.linesName = this.data.lines.map((x: Line) => {
+          if (x.marches.length > 0) {
+            return x.line_name;
+          }
+        });
+        this.linesName = this.linesName.filter((x: string) => x);
       });
-      this.linesName = this.linesName.filter((x: string) => x);
-      })
     };
     const UpdateSimTime = (data: string) => {
       if (!this.chart || !this.chart.chart) {
@@ -107,7 +106,6 @@ export class HomeComponent implements OnInit {
     eel.expose(UpdateTrain, 'update_train_js');
     eel.expose(UpdateSimTime, 'update_sim_time_js');
     eel.receive_walks_from_py()(ReceiveWalks);
-
   }
 
   private updateTrain(train: string) {
