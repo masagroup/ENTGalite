@@ -106,6 +106,9 @@ export class HomeService {
         const arrivalTime = this.parseDateTime(stopPoint.arrival_time).valueOf();
         const departureTime = this.parseDateTime(stopPoint.departure_time).valueOf();
         const y = stations.findIndex(station => station.name === stopPoint.stop_point_name);
+        if (y === -1) {
+          return;
+        }
         if (!maxTime) {
           maxTime = departureTime;
         } else if (maxTime && maxTime < departureTime) {
@@ -129,12 +132,18 @@ export class HomeService {
         trace.push({
           x: arrivalTime,
           y: y,
-          coord: stations[y].coord
+          coord: {
+            lat: parseFloat(stations[y].coord.lat),
+            lon: parseFloat(stations[y].coord.lon)
+          }
         });
         trace.push({
           x: departureTime,
           y: y,
-          coord: stations[y].coord
+          coord: {
+            lat: parseFloat(stations[y].coord.lat),
+            lon: parseFloat(stations[y].coord.lon)
+          }
         });
         stopName.push(stopPoint.stop_point_name);
       });
@@ -149,7 +158,8 @@ export class HomeService {
         borderDash: [10, 5],
         borderWidth: 1,
         selectedLine: selectedLine,
-        prediction: true
+        prediction: true,
+        hidden: false,
       });
     });
     return { traces, stations, minTime, maxTime, minStation, maxStation, marchNames };
