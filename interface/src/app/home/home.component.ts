@@ -18,7 +18,7 @@ Chart.pluginService.register({
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
     ctx.fill();
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-    ctx.stroke()
+    ctx.stroke();
     ctx.rect(
       0,
       ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),

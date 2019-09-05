@@ -21,6 +21,7 @@ P = pysw.client_protocols
 
 def send_train_to_interface(train: str):
     """Send Time to interface in order to synchronize simulation and interface"""
+    print(train)
     eel.update_train_js(train)
 
 
@@ -97,17 +98,8 @@ class TestFactory(P.SWFactory):
 
 def start_connection(config):
     asyncio.set_event_loop(asyncio.new_event_loop())
-##    conf = pysw.config.default
-##    pysw.config.default.root_dir = "C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2" 
-##    conf.server_name_or_ip = ip
-
-    # # le port est fournitadmin pour session "test ENTGalite" (http://46.218.153.46:8080/sncf/)
-##    conf.port_sim = port
     config.data_set = "SNCF"
     pysw.physical.install_importer(config)
-
-##    import sys
-##    sys.path.append("C:\ProgramData\MASA Group\SWORD Client\\bin\_\\2\data\models\SNCF\physical")
     import sncf
     F = TestFactory(sncf, config.login)
     pysw.app.connect(config, sim_factory=F, timeline_factory=None)
@@ -122,8 +114,6 @@ def start_app(develop):
                                         )
     develop = args.dev
     conf = pysw.config.create_config_from_cmd_args(args)
-##    import sys
-##    sys.exit()
 
     if args.dev:
         directory = './interface/src'
