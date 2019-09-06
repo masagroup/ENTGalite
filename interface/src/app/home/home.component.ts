@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { Context } from 'chartjs-plugin-datalabels';
 
-import { HomeService, MarchesByLines, Line } from './home.service';
+import { HomeService, MarchesByLines, Line, Point, RunInfo } from './home.service';
 import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
@@ -41,21 +41,6 @@ const colorList = [
   '#000075'
 ];
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface RunInfo {
-  lineName: string;
-  marcheNames: string[];
-  stations: string[];
-  hidden: boolean;
-  minTime: number;
-  maxTime: number;
-  minStation: number;
-  maxStation: number;
-}
 
 @Component({
   selector: 'app-home',
@@ -143,7 +128,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  private updateTrain(runName: string, coordTrain: Point) {
+  private async updateTrain(runName: string, coordTrain: Point) {
     const _datasets = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
     if (index === -1) {
@@ -155,7 +140,7 @@ export class HomeComponent implements OnInit {
     let stations2: any;
     let minDist: number;
     walk.data.forEach((element: any, i: number) => {
-      if (!walk.data[i + 1]) {
+      if (!walk.data[i + 1] || !walk.data[i] || !walk.data[i + 1].coord || !walk.data[i].coord) {
         return;
       }
       const coord1: Point = { x: element.coord.lat, y: element.coord.lon };
@@ -328,7 +313,7 @@ export class HomeComponent implements OnInit {
       }
     }
     this.chart.update();
-  };
+  }
 
   private initChart() {
     this.options = {
