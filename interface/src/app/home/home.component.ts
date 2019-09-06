@@ -86,7 +86,7 @@ export class HomeComponent implements OnInit {
     eel.set_host('ws://localhost:8000');
 
     const UpdateTrain = (data: string) => {
-      if (!this.chart || !this.chart.chart) {
+      if (!this.chart) {
         return;
       }
       const dataSplited = data.split(' ');
@@ -95,7 +95,7 @@ export class HomeComponent implements OnInit {
       this.updateTrain(runName, coordTrain);
     };
     const UpdateSimTime = (data: string) => {
-      if (!this.chart || !this.chart.chart) {
+      if (!this.chart) {
         return;
       }
       this.simTime = this.homeService.parseDateTime(data);
@@ -144,7 +144,6 @@ export class HomeComponent implements OnInit {
   }
 
   private updateTrain(runName: string, coordTrain: Point) {
-    return;
     const _datasets = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
     if (index === -1) {
