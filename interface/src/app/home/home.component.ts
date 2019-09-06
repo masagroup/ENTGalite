@@ -223,10 +223,14 @@ export class HomeComponent implements OnInit {
     const _datasets: any = this.datasets;
     const _options = this.chart.options;
     const indexRealTime = _datasets.findIndex((x: any) => x.realTime === true);
+    let offset = 0;
     if (indexRealTime !== -1) {
+      offset = this.simTime.getTime() - _datasets[indexRealTime].data[0].x;
       _datasets.splice(indexRealTime, 1);
     }
-    console.log(data[0].x, _options.plugins.zoom.pan.rangeMax.x, _options.plugins.zoom.pan.rangeMax.x);
+    this.chart.chart.options.scales.xAxes[0].time.min += offset;
+    this.chart.chart.options.scales.xAxes[0].time.max += offset;
+    console.log(this.chart);
     if (data[0].x < _options.plugins.zoom.pan.rangeMin.x) {
       _options.plugins.zoom.pan.rangeMin = {
         x: data[0].x
@@ -254,6 +258,7 @@ export class HomeComponent implements OnInit {
       realTime: true
     });
     this.chart.update();
+    this.updateInfo(this.chart);
   }
 
   private updateInfo = (chart: any) => {
@@ -362,6 +367,7 @@ export class HomeComponent implements OnInit {
                 minute: 'HH:mm',
                 hour: 'HH:mm'
               },
+              distribution: 'series',
               // @ts-ignore
               min: this.minTime,
               // @ts-ignore
@@ -420,7 +426,7 @@ export class HomeComponent implements OnInit {
               x: this.minTime
             },
             rangeMax: {
-              x: this.maxTime
+              x: this.maxTime + 60000000 * 24
             },
             onPanComplete: this.updateInfo
           },
