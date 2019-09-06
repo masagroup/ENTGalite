@@ -1,5 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { Component, OnInit, ViewChild } from '@angular/core';
 
 import { BaseChartDirective } from 'ng2-charts';
 import { Context } from 'chartjs-plugin-datalabels';
@@ -9,16 +8,13 @@ import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
-  beforeDraw: function(chart) {
+  beforeDraw: function(chart: any) {
     const ctx = chart.ctx;
     const chartArea = chart.chartArea;
     ctx.save();
     ctx.fillStyle = 'lightgray';
-    ctx.strokeStyle = 'black';
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
     ctx.fill();
-    ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-    ctx.stroke();
     ctx.rect(
       0,
       ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
@@ -26,13 +22,6 @@ Chart.pluginService.register({
       ctx.canvas.height - chartArea.bottom
     );
     ctx.fill();
-    ctx.rect(
-      0,
-      ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
-      chartArea.left,
-      ctx.canvas.height - chartArea.bottom
-    );
-    ctx.stroke();
     ctx.restore();
   }
 });
@@ -60,6 +49,7 @@ interface RunInfo {
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
+  @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
   isLoading = true;
   options: Chart.ChartOptions;
   datasets: Chart.ChartDataSets[] = [];
@@ -74,9 +64,8 @@ export class HomeComponent implements OnInit {
   private minTime: number;
   private maxTime: number;
   private data: MarchesByLines;
-  @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
 
-  constructor(private cd: ChangeDetectorRef, private homeService: HomeService) {}
+  constructor(private homeService: HomeService) {}
 
   async ngOnInit() {
     const eel = window.eel;
@@ -110,34 +99,39 @@ export class HomeComponent implements OnInit {
   }
 
   selectLine(lineName: string, checked: boolean) {
-    const _datasets = this.datasets;
     const _hiddenDataSets = this.hiddenDataSets;
     if (checked) {
       _hiddenDataSets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
-          _datasets.push(dataset);
+          this.datasets.push(dataset);
         }
       });
-      const indexRunInfo = this.runInfos.findIndex(runInfo => runInfo.lineName === lineName);
+      const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
       const runInfo = this.runInfos[indexRunInfo];
+      runInfo.hidden = false;
       this.maxStation = runInfo.maxStation > this.maxStation ? runInfo.maxStation : this.maxStation;
       this.stations.push({line: runInfo.lineName, stations: runInfo.stations});
     } else {
-      _datasets.forEach((element: any, index) => {
+      this.datasets.forEach((element: any, index) => {
         if (element.selectedLine === lineName) {
           this.intersect = this.intersect.filter(x => x.dataIndex !== index);
         }
       });
-      const indexRunInfo = this.runInfos.findIndex(runInfo => runInfo.lineName === lineName);
+      const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
       const runInfo = this.runInfos[indexRunInfo];
       runInfo.hidden = true;
+      this.maxStation =  Math.max(...this.runInfos.filter(x => !x.hidden).map(x => x.maxStation));
       this.stations = this.stations.filter(x => x.line !== lineName);
-      this.datasets = _datasets.filter((dataset: any) => dataset.selectedLine === lineName);
+      this.datasets = this.datasets.filter((dataset: any) => dataset.selectedLine !== lineName);
     }
+    if (this.chart) {
+
     this.chart.update();
+    }
   }
 
   private updateTrain(runName: string, coordTrain: Point) {
+    return;
     const _datasets = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
     if (index === -1) {
@@ -200,13 +194,13 @@ export class HomeComponent implements OnInit {
         data: [{ x: this.simTime, y: y }],
         showLine: true,
         borderColor: walk.borderColor,
-        hidden: walk.hidden,
+        hidden: false,
         pointRadius: 0,
         borderWidth: 3,
         prediction: false
-      }
+      };
       _datasets.push(newDataset);
-      if ( this.datasets.findIndex((dataset: any) => walk.selectedLine === dataset.selectdLine) != - 1) {
+      if ( this.datasets.findIndex((dataset: any) => walk.selectedLine === dataset.selectedLine) !== - 1) {
         this.datasets.push(newDataset);
       }
     } else {
@@ -256,20 +250,16 @@ export class HomeComponent implements OnInit {
 
 
   private updateInfo = (chart: any) => {
-    const min = parseInt(this.options.scales.xAxes[0].time.min);
-    const max = parseInt(this.options.scales.xAxes[0].time.max);
-    const _datasets = this.datasets;
-    const _options = this.options;
+    const min = chart.chart.options.scales.xAxes[0].time.min;
+    const max = chart.chart.options.scales.xAxes[0].time.max;
+    const _datasets = chart.chart.config.data.datasets;
     this.intersect.forEach(intersect => {
       if (_datasets[intersect.datasetIndex]) {
         _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
       }
     });
     this.intersect = [];
-    _datasets.forEach((dataset: any, index: number) => {
-      if (dataset.hidden) {
-        return;
-      }
+    this.datasets.forEach((dataset: any, index: number) => {
       if (
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
@@ -315,18 +305,18 @@ export class HomeComponent implements OnInit {
       }
     });
     if (max - min > 7200000) {
-      if (_options.scales.xAxes[0].time.unitStepSize !== 2) {
-        _options.scales.xAxes[0].time.unitStepSize = 2;
-        _options.scales.xAxes[0].time.unit = 'hour';
+      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
+        chart.chart.options.scales.xAxes[0].time.unitStepSize = 2;
+        chart.chart.options.scales.xAxes[0].time.unit = 'hour';
       }
     } else {
-      if (_options.scales.xAxes[0].time.unitStepSize !== 10) {
-        _options.scales.xAxes[0].time.unitStepSize = 10;
-        _options.scales.xAxes[0].time.unit = 'minute';
+      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
+        chart.chart.options.scales.xAxes[0].time.unitStepSize = 10;
+        chart.chart.options.scales.xAxes[0].time.unit = 'minute';
       }
     }
-    this.chart.chart.update();
-  };
+    this.chart.update();
+  }
 
   private initChart() {
     this.options = {
@@ -365,9 +355,10 @@ export class HomeComponent implements OnInit {
                 minute: 'HH:mm',
                 hour: 'HH:mm'
               },
-              min: this.minTime.toString(),
-              max: (this.minTime + 600000 * 5).toString(),
               // @ts-ignore
+              min: this.minTime,
+              // @ts-ignore
+              max: this.minTime + 600000 * 5,
               fontColor: 'dark'
             },
             ticks: {
@@ -419,10 +410,10 @@ export class HomeComponent implements OnInit {
             enabled: true,
             mode: 'x',
             rangeMin: {
-              x: this.minTime.toString()
+              x: this.minTime
             },
             rangeMax: {
-              x: this.maxTime.toString()
+              x: this.maxTime
             },
             onPanComplete: this.updateInfo
           },
@@ -430,11 +421,11 @@ export class HomeComponent implements OnInit {
             enabled: true,
             mode: 'x',
             rangeMin: {
-              x: this.minTime.toString()
+              x: this.minTime
             },
             rangeMax: {
 
-              x: this.maxTime.toString()
+              x: this.maxTime
             },
             onZoomComplete: this.updateInfo
           }
@@ -484,9 +475,9 @@ export class HomeComponent implements OnInit {
             return context.dataset.label;
           },
           display: (context: any) => {
-            const min = parseInt(this.options.scales.xAxes[0].time.min);
+            const min = context.chart.options.scales.xAxes[0].time.min;
             const len = context.dataset.data.length - 1;
-            if (context.dataset.data[0].x < min) {
+            if (context.dataIndex === 0 && context.dataset.data[0].x < min) {
               return false;
             }
             if (context.dataIndex === len && context.dataset.data[len].x < min) {
@@ -507,20 +498,9 @@ export class HomeComponent implements OnInit {
             }
             return context.dataIndex === 0 || context.dataIndex === context.dataset.data.length - 1;
           }
+          }
         }
-      }
     };
-    if (this.maxTime - this.minTime > 7200000) {
-      if (this.options.scales.xAxes[0].time.unitStepSize !== 2) {
-        this.options.scales.xAxes[0].time.unitStepSize = 2;
-        this.options.scales.xAxes[0].time.unit = 'hour';
-      }
-    } else {
-      if (this.options.scales.xAxes[0].time.unitStepSize !== 10) {
-        this.options.scales.xAxes[0].time.unitStepSize = 10;
-        this.options.scales.xAxes[0].time.unit = 'minute';
-      }
-    }
   }
 
   private initLines() {
@@ -537,10 +517,10 @@ export class HomeComponent implements OnInit {
       } = this.homeService.getInitialTraces(this.data, line.line_name, color);
       this.hiddenDataSets.push(...traces);
       if (!this.minTime || this.minTime > minTime) {
-        this.minTime = minTime
+        this.minTime = minTime;
       }
       if (!this.maxTime || this.maxTime < maxTime) {
-        this.maxTime = maxTime
+        this.maxTime = maxTime;
       }
       this.runInfos.push({
         lineName: line.line_name,
