@@ -230,7 +230,6 @@ export class HomeComponent implements OnInit {
     }
     this.chart.chart.options.scales.xAxes[0].time.min += offset;
     this.chart.chart.options.scales.xAxes[0].time.max += offset;
-    console.log(this.chart);
     if (data[0].x < _options.plugins.zoom.pan.rangeMin.x) {
       _options.plugins.zoom.pan.rangeMin = {
         x: data[0].x
