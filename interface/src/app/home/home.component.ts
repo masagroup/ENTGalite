@@ -1,25 +1,20 @@
-import { Component, OnInit, ViewChild, NgZone } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { Component, OnInit, ViewChild } from '@angular/core';
 
 import { BaseChartDirective } from 'ng2-charts';
 import { Context } from 'chartjs-plugin-datalabels';
-import { ChangeDetectorRef } from '@angular/core';
 
-import { HomeService, MarchesByLines, Line } from './home.service';
+import { HomeService, MarchesByLines, Line, Point, RunInfo } from './home.service';
 import * as Chart from 'chart.js';
 
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
-  beforeDraw: function(chart) {
+  beforeDraw: function(chart: any) {
     const ctx = chart.ctx;
     const chartArea = chart.chartArea;
     ctx.save();
     ctx.fillStyle = 'lightgray';
-    ctx.strokeStyle = 'black';
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
     ctx.fill();
-    ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-    ctx.stroke();
     ctx.rect(
       0,
       ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
@@ -27,22 +22,22 @@ Chart.pluginService.register({
       ctx.canvas.height - chartArea.bottom
     );
     ctx.fill();
-    ctx.rect(
-      0,
-      ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
-      chartArea.left,
-      ctx.canvas.height - chartArea.bottom
-    );
-    ctx.stroke();
     ctx.restore();
   }
 });
-const colorList = ['#6E1E78', '#E05206', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#0088CE'];
+const colorList = [
+  '#6E1E78', '#E05206', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#0088CE',
+  '#e6194b',
+  '#3cb44b',
+  '#4363d8',
+  '#f58231',
+  '#f032e6',
+  '#9a6324',
+  '#800000',
+  '#808000',
+  '#000075'
+];
 
-interface Point {
-  x: number;
-  y: number;
-}
 
 @Component({
   selector: 'app-home',
@@ -50,54 +45,39 @@ interface Point {
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  data: MarchesByLines;
-  linesName: string[] = [];
-  stations: { line: string; stations: string[] }[] = [];
-  intersect: { datasetIndex: number; dataIndex: number }[] = [];
-  walk: {
-    walk: string;
-    line: string;
-    color: string;
-    stations: { x: number; y: number; coord: { lat: string; lon: string } }[];
-  }[] = [];
-  _selectedLine = '';
-  dateTime: Date;
-  simTime: Date;
-  colorIndex = 0;
-  options: any;
-  datasets: Chart.ChartDataSets[];
-  marcheNames: { lineName: string; marcheNames: string[] }[] = [];
-  maxStation: number;
-  minTime: number;
-  maxTime: number;
-  file: FormControl = new FormControl([]);
   @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
+  isLoading = true;
+  options: Chart.ChartOptions;
+  datasets: Chart.ChartDataSets[] = [];
+  linesName: string[] = [];
+  private hiddenDataSets: Chart.ChartDataSets[] = [];
+  private stations: { line: string; stations: string[] }[] = [];
+  private intersect: { datasetIndex: number; dataIndex: number }[] = [];
+  private simTime: Date;
+  private colorIndex = 0;
+  private runInfos: RunInfo[] = [];
+  private maxStation: number;
+  private minTime: number;
+  private maxTime: number;
+  private data: MarchesByLines;
 
-  constructor(private zone: NgZone, private homeService: HomeService) {}
+  constructor(private homeService: HomeService) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     const eel = window.eel;
     eel.set_host('ws://localhost:8000');
 
     const UpdateTrain = (data: string) => {
-      if (!this.chart || !this.chart.chart) {
+      if (!this.chart) {
         return;
       }
-      this.updateTrain(data);
-    };
-    const ReceiveWalks = (walks: string) => {
-      this.zone.run(() => {
-        this.data = JSON.parse(walks);
-        this.linesName = this.data.lines.map((x: Line) => {
-          if (x.marches.length > 0) {
-            return x.line_name;
-          }
-        });
-        this.linesName = this.linesName.filter((x: string) => x);
-      });
+      const dataSplited = data.split(' ');
+      const coordTrain: Point = { x: parseFloat(dataSplited[2]), y: parseFloat(dataSplited[3]) };
+      const runName = dataSplited[0];
+      this.updateTrain(runName, coordTrain);
     };
     const UpdateSimTime = (data: string) => {
-      if (!this.chart || !this.chart.chart) {
+      if (!this.chart) {
         return;
       }
       this.simTime = this.homeService.parseDateTime(data);
@@ -105,30 +85,65 @@ export class HomeComponent implements OnInit {
     };
     eel.expose(UpdateTrain, 'update_train_js');
     eel.expose(UpdateSimTime, 'update_sim_time_js');
-    eel.receive_walks_from_py()(ReceiveWalks);
+    const walks = await eel.receive_walks_from_py()();
+    this.data = JSON.parse(walks);
+    this.linesName = this.data.lines.map((x: Line) => (x.marches.length > 0 ? x.line_name : undefined));
+    this.linesName = this.linesName.filter((x: string) => x);
+    this.initLines();
+    this.initChart();
+    this.isLoading = false;
   }
 
-  private updateTrain(train: string) {
-    const dataSplited = train.split(' ');
-    const coordTrain: Point = { x: parseFloat(dataSplited[2]), y: parseFloat(dataSplited[3]) };
-    const walkName = dataSplited[0];
-    const index = this.walk.findIndex(x => x.walk === walkName);
+  selectLine(lineName: string, checked: boolean) {
+    const _hiddenDataSets = this.hiddenDataSets;
+    if (checked) {
+      _hiddenDataSets.forEach((dataset: any) => {
+        if (dataset.selectedLine === lineName) {
+          this.datasets.push(dataset);
+        }
+      });
+      const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
+      const runInfo = this.runInfos[indexRunInfo];
+      runInfo.hidden = false;
+      this.maxStation = runInfo.maxStation > this.maxStation ? runInfo.maxStation : this.maxStation;
+      this.stations.push({ line: runInfo.lineName, stations: runInfo.stations });
+    } else {
+      this.datasets.forEach((element: any, index) => {
+        if (element.selectedLine === lineName) {
+          this.intersect = this.intersect.filter(x => x.dataIndex !== index);
+        }
+      });
+      const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
+      const runInfo = this.runInfos[indexRunInfo];
+      runInfo.hidden = true;
+      this.maxStation = Math.max(...this.runInfos.filter(x => !x.hidden).map(x => x.maxStation));
+      this.stations = this.stations.filter(x => x.line !== lineName);
+      this.datasets = this.datasets.filter((dataset: any) => dataset.selectedLine !== lineName);
+    }
+    if (this.chart) {
+      this.chart.update();
+    }
+  }
+
+  private async updateTrain(runName: string, coordTrain: Point) {
+    const _datasets = this.hiddenDataSets;
+    const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
     if (index === -1) {
       return;
     }
-    const walk = this.walk[index];
+    const walk = <any>_datasets[index];
     let bestStations: any;
     let stations1: any;
     let stations2: any;
     let minDist: number;
-    walk.stations.forEach((element: any, i: number) => {
-      if (i === walk.stations.length - 1) {
+    walk.data.forEach((element: any, i: number) => {
+      if (!walk.data[i + 1] || !walk.data[i] || !walk.data[i + 1].coord || !walk.data[i].coord) {
         return;
       }
-      const coord1: Point = { x: parseFloat(element.coord.lat), y: parseFloat(element.coord.lon) };
+      const coord1: Point = { x: element.coord.lat, y: element.coord.lon };
       const coord2: Point = {
-        x: parseFloat(walk.stations[i + 1].coord.lat),
-        y: parseFloat(walk.stations[i + 1].coord.lon)
+        x: walk.data[i + 1].coord.lat,
+        y: walk.data[i + 1].coord.lon
       };
       const position = this.homeService.project(coordTrain, coord1, coord2);
       if (Number.isNaN(position.t)) {
@@ -143,44 +158,50 @@ export class HomeComponent implements OnInit {
       if (!bestStations || testDist < minDist) {
         minDist = testDist;
         bestStations = position;
-        stations1 = walk.stations[i];
-        stations2 = walk.stations[i + 1];
+        stations1 = walk.data[i];
+        stations2 = walk.data[i + 1];
       }
     });
-    if (bestStations) {
-      const totalDist = this.homeService.getDistanceFromLatLonInKm(
-        parseFloat(stations1.coord.lat),
-        parseFloat(stations1.coord.lon),
-        parseFloat(stations2.coord.lat),
-        parseFloat(stations2.coord.lon)
-      );
-      const dist = this.homeService.getDistanceFromLatLonInKm(
-        parseFloat(stations1.coord.lat),
-        parseFloat(stations1.coord.lon),
-        parseFloat(bestStations.point.x),
-        parseFloat(bestStations.point.y)
-      );
-      const percent = (100 * dist) / totalDist;
-      const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
-      const _datasets = this.chart.chart.data.datasets;
-      const indexRealTime = _datasets.findIndex((x: any) => x.label === dataSplited[0] && !x.prediction);
-      if (indexRealTime === -1) {
-        _datasets.push(<any>{
-          type: 'scatter',
-          selectedLine: walk.line,
-          label: dataSplited[0],
-          data: [{ x: this.simTime, y: y }],
-          showLine: true,
-          borderColor: walk.color,
-          pointRadius: 0,
-          borderWidth: 3,
-          prediction: false
-        });
-      } else {
-        // @ts-ignore
-        _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-      }
+    if (!bestStations) {
+      return;
     }
+    const totalDist = this.homeService.getDistanceFromLatLonInKm(
+      stations1.coord.lat,
+      stations1.coord.lon,
+      stations2.coord.lat,
+      stations2.coord.lon
+    );
+    const dist = this.homeService.getDistanceFromLatLonInKm(
+      stations1.coord.lat,
+      stations1.coord.lon,
+      bestStations.point.x,
+      bestStations.point.y
+    );
+    const percent = (100 * dist) / totalDist;
+    const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
+    const indexRealTime = _datasets.findIndex((x: any) => x.label === runName && !x.prediction);
+    if (indexRealTime === -1) {
+      const newDataset = {
+        type: 'scatter',
+        selectedLine: walk.selectedLine,
+        label: runName,
+        data: [{ x: this.simTime, y: y }],
+        showLine: true,
+        borderColor: walk.borderColor,
+        hidden: false,
+        pointRadius: 0,
+        borderWidth: 3,
+        prediction: false
+      };
+      _datasets.push(newDataset);
+      if (this.datasets.findIndex((dataset: any) => walk.selectedLine === dataset.selectedLine) !== -1) {
+        this.datasets.push(newDataset);
+      }
+    } else {
+      // @ts-ignore
+      _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
+    }
+    this.chart.update();
   }
 
   private updateRealTime() {
@@ -194,139 +215,45 @@ export class HomeComponent implements OnInit {
         y: this.maxStation
       }
     ];
-    const _datasets: any = this.chart.chart.data.datasets;
+    const _datasets: any = this.datasets;
+    const _options = this.options;
     const indexRealTime = _datasets.findIndex((x: any) => x.realTime === true);
     if (indexRealTime !== -1) {
       _datasets.splice(indexRealTime, 1);
     }
-    if (data[0].x < this.chart.chart.options.plugins.zoom.pan.rangeMin.x) {
-      this.chart.chart.options.plugins.zoom.pan.rangeMin.x = data[0].x;
-      this.chart.chart.options.plugins.zoom.zoom.rangeMin.x = data[0].x;
+    if (data[0].x < _options.plugins.zoom.pan.rangeMin.x) {
+      _options.plugins.zoom.pan.rangeMin.x = data[0].x;
+      _options.plugins.zoom.zoom.rangeMin.x = data[0].x;
     }
-    if (data[0].x > this.chart.chart.options.plugins.zoom.pan.rangeMax.x) {
-      this.chart.chart.options.plugins.zoom.pan.rangeMax.x = data[0].x;
-      this.chart.chart.options.plugins.zoom.zoom.rangeMax.x = data[0].x;
+    if (data[0].x > _options.plugins.zoom.pan.rangeMax.x) {
+      _options.plugins.zoom.pan.rangeMax.x = data[0].x;
+      _options.plugins.zoom.zoom.rangeMax.x = data[0].x;
     }
-  _datasets.push(
-      {
-        type: 'scatter',
-        label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
-        data: data,
-        showLine: true,
-        borderColor: 'black',
-        pointRadius: 0,
-        borderWidth: 1,
-        realTime: true
-      }
-    );
-    this.chart.chart.update();
-  }
-
-  selectLine(lineName: string, event: any) {
-    if (!this.datasets) {
-      this.selectedLine = lineName;
-    } else if (event.checked) {
-      let color;
-      this.datasets.forEach((dataset: any) => {
-        if (dataset.selectedLine === lineName) {
-          color = dataset.borderColor;
-        }
-      });
-      if (!color) {
-        color = colorList[this.colorIndex];
-      }
-      const {
-        traces,
-        stations,
-        minTime,
-        maxTime,
-        minStation,
-        maxStation,
-        marchNames
-      } = this.homeService.getInitialTraces(this.data, lineName, color);
-      this.marcheNames.push({ lineName: lineName, marcheNames: marchNames });
-      this.stations.push({ line: lineName, stations: stations.map(station => station.name) });
-      let found = false;
-      this.walk.forEach(walk => {
-        if (walk.line === lineName) {
-          found = true;
-        }
-      });
-      if (!found) {
-        traces.forEach((trace: any) => {
-          this.walk.push({
-            color: colorList[this.colorIndex],
-            line: lineName,
-            walk: trace.label,
-            stations: trace.data.slice(0)
-          });
-        });
-      }
-      this.datasets.forEach((dataset: any) => {
-        if (dataset.selectedLine === lineName && dataset.hidden === true) {
-          dataset.hidden = false;
-        }
-      });
-      this.colorIndex += 1;
-      if (this.colorIndex === colorList.length - 1) {
-        this.colorIndex = 0;
-      }
-      this.datasets = this.datasets.concat(traces);
-      if (this.chart.options.plugins.zoom.pan.rangeMax.x < maxTime) {
-        this.chart.options.plugins.zoom.pan.rangeMax.x = maxTime;
-      }
-      if (this.chart.options.plugins.zoom.pan.rangeMin.x < minTime) {
-        this.chart.options.plugins.zoom.pan.rangeMax.x = minTime;
-      }
-      if (this.chart.options.plugins.zoom.zoom.rangeMax.x < maxTime) {
-        this.chart.options.plugins.zoom.zoom.rangeMax.x = maxTime;
-      }
-      if (this.chart.options.plugins.zoom.zoom.rangeMin.x < minTime) {
-        this.chart.options.plugins.zoom.zoom.rangeMax.x = minTime;
-      }
-      this.chart.update();
-    } else {
-      if (this.colorIndex === colorList.length - 1) {
-        this.colorIndex = 0;
-      }
-      this.datasets.forEach((element: any, index) => {
-        if (element.selectedLine === lineName) {
-          this.intersect = this.intersect.filter(x => x.dataIndex !== index);
-        }
-      });
-      this.stations = this.stations.filter(x => x.line !== lineName);
-      this.datasets = this.datasets.filter((x: any) => {
-        if (x.selectedLine !== lineName) {
-          return true;
-        }
-        if (x.selectedLine === lineName && x.prediction !== true) {
-          return true;
-        }
-        return false;
-      });
-      this.datasets.forEach((dataset: any) => {
-        if (dataset.selectedLine === lineName) {
-          dataset.hidden = true;
-        }
-      });
-      this.marcheNames = this.marcheNames.filter(x => x.lineName !== lineName);
-      this.chart.update();
-    }
+    _datasets.push({
+      type: 'scatter',
+      label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
+      data: data,
+      showLine: true,
+      borderColor: 'black',
+      pointRadius: 0,
+      borderWidth: 1,
+      realTime: true
+    });
+    this.chart.update();
   }
 
   private updateInfo = (chart: any) => {
+    console.log(chart);
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets = this.datasets;
-    let change = false;
     this.intersect.forEach(intersect => {
-      change = true;
       if (_datasets[intersect.datasetIndex]) {
         _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
       }
     });
     this.intersect = [];
-    this.datasets.forEach((dataset: any, index: number) => {
+    _datasets.forEach((dataset: any, index: number) => {
       if (
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
@@ -346,7 +273,6 @@ export class HomeComponent implements OnInit {
             this.maxStation
           );
           this.intersect.push({ datasetIndex: index, dataIndex: i });
-          change = true;
           _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;
         }
@@ -364,7 +290,6 @@ export class HomeComponent implements OnInit {
             this.maxStation
           );
           this.intersect.push({ datasetIndex: index, dataIndex: i });
-          change = true;
           if (typeof intersect.x === 'string') {
             continue;
           }
@@ -377,47 +302,17 @@ export class HomeComponent implements OnInit {
       if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
         chart.chart.options.scales.xAxes[0].time.unitStepSize = 2;
         chart.chart.options.scales.xAxes[0].time.unit = 'hour';
-        chart.chart.update();
       }
     } else {
       if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
         chart.chart.options.scales.xAxes[0].time.unitStepSize = 10;
         chart.chart.options.scales.xAxes[0].time.unit = 'minute';
-        chart.chart.update();
       }
     }
-    if (change) {
-      this.chart.update();
-    }
-  };
+    this.chart.update();
+  }
 
-  set selectedLine(selectedLine: string) {
-    this._selectedLine = selectedLine;
-    const {
-      traces,
-      stations,
-      minTime,
-      maxTime,
-      minStation,
-      maxStation,
-      marchNames
-    } = this.homeService.getInitialTraces(this.data, this._selectedLine, colorList[this.colorIndex]);
-    traces.forEach((trace: any) => {
-      this.walk.push({
-        color: colorList[this.colorIndex],
-        line: selectedLine,
-        walk: trace.label,
-        stations: trace.data.slice(0)
-      });
-    });
-    this.marcheNames.push({ lineName: selectedLine, marcheNames: marchNames });
-    this.stations.push({ line: selectedLine, stations: stations.map(station => station.name) });
-    this.colorIndex += 1;
-    this.minTime = minTime;
-    this.maxTime = maxTime;
-    this.maxStation = maxStation;
-    this.intersect = [];
-    this.datasets = traces;
+  private initChart() {
     this.options = {
       type: 'scatter',
       maintainAspectRatio: false,
@@ -454,9 +349,11 @@ export class HomeComponent implements OnInit {
                 minute: 'HH:mm',
                 hour: 'HH:mm'
               },
-              fontColor: 'dark',
-              min: minTime,
-              max: minTime + 600000 * 5
+              // @ts-ignore
+              min: this.minTime,
+              // @ts-ignore
+              max: this.minTime + 600000 * 5,
+              fontColor: 'dark'
             },
             ticks: {
               fontColor: 'black',
@@ -507,10 +404,10 @@ export class HomeComponent implements OnInit {
             enabled: true,
             mode: 'x',
             rangeMin: {
-              x: minTime
+              x: this.minTime
             },
             rangeMax: {
-              x: maxTime
+              x: this.maxTime
             },
             onPanComplete: this.updateInfo
           },
@@ -518,16 +415,17 @@ export class HomeComponent implements OnInit {
             enabled: true,
             mode: 'x',
             rangeMin: {
-              x: minTime
+              x: this.minTime
             },
             rangeMax: {
-              x: maxTime
+              x: this.maxTime
             },
             onZoomComplete: this.updateInfo
           }
         },
         datalabels: {
           backgroundColor: 'transparent',
+          // @ts-ignore
           color: function(context: Context) {
             return context.dataset.borderColor;
           },
@@ -539,7 +437,7 @@ export class HomeComponent implements OnInit {
           },
           anchor: (context: Context | any) => {
             const dataIndex = context.dataIndex;
-            if (context.dataset.data[dataIndex].x === minTime) {
+            if (context.dataset.data[dataIndex].x === this.minTime) {
               return 'end';
             }
             return 'start';
@@ -549,29 +447,28 @@ export class HomeComponent implements OnInit {
             const dataIndex = context.dataIndex;
             const x = context.dataset.data[dataIndex].x;
             const y = context.dataset.data[dataIndex].y;
-            if (x === minTime && y === 0) {
+            if (x === this.minTime && y === 0) {
               return -45;
             }
-            if (x === minTime && y === maxStation) {
+            if (x === this.minTime && y === this.maxStation) {
               return 45;
             }
-            if (x === minTime) {
+            if (x === this.minTime) {
               return 'right';
             }
             if (y === 0) {
               return 'top';
             }
-            if (y === maxStation) {
+            if (y === this.maxStation) {
               return 'bottom';
             }
             return 'left';
           },
-          formatter: function(value: any, context: Context | any) {
+          formatter: function(_: any, context: Context | any) {
             return context.dataset.label;
           },
           display: (context: any) => {
-            const min = context.chart.chart.config.options.scales.xAxes[0].time.min;
-            const max = context.chart.config.options.scales.xAxes[0].time.max;
+            const min = context.chart.options.scales.xAxes[0].time.min;
             const len = context.dataset.data.length - 1;
             if (context.dataIndex === 0 && context.dataset.data[0].x < min) {
               return false;
@@ -598,7 +495,37 @@ export class HomeComponent implements OnInit {
       }
     };
   }
-  get selectedLine(): string {
-    return this._selectedLine;
+
+  private initLines() {
+    this.data.lines.forEach(line => {
+      const color = colorList[this.colorIndex];
+      const {
+        traces,
+        stations,
+        minTime,
+        maxTime,
+        minStation,
+        maxStation,
+        marchNames
+      } = this.homeService.getInitialTraces(this.data, line.line_name, color);
+      this.hiddenDataSets.push(...traces);
+      if (!this.minTime || this.minTime > minTime) {
+        this.minTime = minTime;
+      }
+      if (!this.maxTime || this.maxTime < maxTime) {
+        this.maxTime = maxTime;
+      }
+      this.runInfos.push({
+        lineName: line.line_name,
+        marcheNames: marchNames,
+        stations: stations.map(station => station.name),
+        hidden: true,
+        minTime: minTime,
+        maxTime: maxTime,
+        minStation: minStation,
+        maxStation: maxStation
+      });
+      this.colorIndex += 1;
+    });
   }
 }

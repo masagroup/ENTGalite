@@ -30,9 +30,20 @@ export interface MarchesByLines {
   lines: Line[];
 }
 
-interface Point {
+export interface Point {
   x: number;
   y: number;
+}
+
+export interface RunInfo {
+  lineName: string;
+  marcheNames: string[];
+  stations: string[];
+  hidden: boolean;
+  minTime: number;
+  maxTime: number;
+  minStation: number;
+  maxStation: number;
 }
 
 Date.prototype.pad = function pad(number: number): string {
@@ -106,6 +117,9 @@ export class HomeService {
         const arrivalTime = this.parseDateTime(stopPoint.arrival_time).valueOf();
         const departureTime = this.parseDateTime(stopPoint.departure_time).valueOf();
         const y = stations.findIndex(station => station.name === stopPoint.stop_point_name);
+        if (y === -1) {
+          return;
+        }
         if (!maxTime) {
           maxTime = departureTime;
         } else if (maxTime && maxTime < departureTime) {
@@ -129,12 +143,18 @@ export class HomeService {
         trace.push({
           x: arrivalTime,
           y: y,
-          coord: stations[y].coord
+          coord: {
+            lat: parseFloat(stations[y].coord.lat),
+            lon: parseFloat(stations[y].coord.lon)
+          }
         });
         trace.push({
           x: departureTime,
           y: y,
-          coord: stations[y].coord
+          coord: {
+            lat: parseFloat(stations[y].coord.lat),
+            lon: parseFloat(stations[y].coord.lon)
+          }
         });
         stopName.push(stopPoint.stop_point_name);
       });
@@ -149,18 +169,19 @@ export class HomeService {
         borderDash: [10, 5],
         borderWidth: 1,
         selectedLine: selectedLine,
-        prediction: true
+        prediction: true,
+        hidden: false
       });
     });
     return { traces, stations, minTime, maxTime, minStation, maxStation, marchNames };
   }
 
   project(p: Point, a: Point, b: Point) {
-    var atob = { x: b.x - a.x, y: b.y - a.y };
-    var atop = { x: p.x - a.x, y: p.y - a.y };
-    var len = atob.x * atob.x + atob.y * atob.y;
-    var dot = atop.x * atob.x + atop.y * atob.y;
-    var t = Math.min(1, Math.max(0, dot / len));
+    const atob = { x: b.x - a.x, y: b.y - a.y };
+    const atop = { x: p.x - a.x, y: p.y - a.y };
+    const len = atob.x * atob.x + atob.y * atob.y;
+    let dot = atop.x * atob.x + atop.y * atob.y;
+    const t = Math.min(1, Math.max(0, dot / len));
 
     dot = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
 
@@ -176,14 +197,14 @@ export class HomeService {
   }
 
   getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-    var R = 6371;
-    var dLat = this.deg2rad(lat2 - lat1);
-    var dLon = this.deg2rad(lon2 - lon1);
-    var a =
+    const R = 6371;
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    var d = R * c; // Distance in km
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
     return d;
   }
 
