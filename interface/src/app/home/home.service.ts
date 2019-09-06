@@ -114,8 +114,8 @@ export class HomeService {
       marchNames.push(marche.marche_name);
       const trace: any[] = [];
       stopPoints.forEach((stopPoint: StopPoint) => {
-        const arrivalTime = this.parseDateTime(stopPoint.arrival_time).valueOf();
-        const departureTime = this.parseDateTime(stopPoint.departure_time).valueOf();
+        const arrivalTime = this.parseDateTime(stopPoint.arrival_time).getTime();
+        const departureTime = this.parseDateTime(stopPoint.departure_time).getTime();
         const y = stations.findIndex(station => station.name === stopPoint.stop_point_name);
         if (y === -1) {
           return;

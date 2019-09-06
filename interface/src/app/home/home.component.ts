@@ -26,7 +26,13 @@ Chart.pluginService.register({
   }
 });
 const colorList = [
-  '#6E1E78', '#E05206', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#0088CE',
+  '#6E1E78',
+  '#E05206',
+  '#A1006B',
+  '#FFB612',
+  '#009AA6',
+  '#CD0037',
+  '#0088CE',
   '#e6194b',
   '#3cb44b',
   '#4363d8',
@@ -37,7 +43,6 @@ const colorList = [
   '#808000',
   '#000075'
 ];
-
 
 @Component({
   selector: 'app-home',
@@ -216,18 +221,27 @@ export class HomeComponent implements OnInit {
       }
     ];
     const _datasets: any = this.datasets;
-    const _options = this.options;
+    const _options = this.chart.options;
     const indexRealTime = _datasets.findIndex((x: any) => x.realTime === true);
     if (indexRealTime !== -1) {
       _datasets.splice(indexRealTime, 1);
     }
+    console.log(data[0].x, _options.plugins.zoom.pan.rangeMax.x, _options.plugins.zoom.pan.rangeMax.x);
     if (data[0].x < _options.plugins.zoom.pan.rangeMin.x) {
-      _options.plugins.zoom.pan.rangeMin.x = data[0].x;
-      _options.plugins.zoom.zoom.rangeMin.x = data[0].x;
+      _options.plugins.zoom.pan.rangeMin = {
+        x: data[0].x
+      };
+      _options.plugins.zoom.zoom.rangeMin = {
+        x: data[0].x
+      };
     }
     if (data[0].x > _options.plugins.zoom.pan.rangeMax.x) {
-      _options.plugins.zoom.pan.rangeMax.x = data[0].x;
-      _options.plugins.zoom.zoom.rangeMax.x = data[0].x;
+      _options.plugins.zoom.pan.rangeMax = {
+        x: data[0].x
+      };
+      _options.plugins.zoom.zoom.rangeMax = {
+        x: data[0].x
+      };
     }
     _datasets.push({
       type: 'scatter',
@@ -243,7 +257,6 @@ export class HomeComponent implements OnInit {
   }
 
   private updateInfo = (chart: any) => {
-    console.log(chart);
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets = this.datasets;
@@ -310,7 +323,7 @@ export class HomeComponent implements OnInit {
       }
     }
     this.chart.update();
-  }
+  };
 
   private initChart() {
     this.options = {
@@ -418,7 +431,7 @@ export class HomeComponent implements OnInit {
               x: this.minTime
             },
             rangeMax: {
-              x: this.maxTime
+              x: this.maxTime + 60000000 * 24
             },
             onZoomComplete: this.updateInfo
           }
