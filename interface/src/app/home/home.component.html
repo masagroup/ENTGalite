@@ -1,15 +1,18 @@
-<div  *ngIf="!isLoading" class="line-name-container">
+<div *ngIf="!isLoading" class="line-name-container">
   <mat-checkbox
     class="line-name-item"
     *ngFor="let lineName of linesName"
     value="{{ lineName }}"
-    (change)="selectLine(lineName, $event.checked)"
+    (change)="selectLine(lineName, $event.checked);
+     selectLine(lineName, !$event.checked);
+     selectLine(lineName, $event.checked)"
   >
     {{ lineName }}
   </mat-checkbox>
 </div>
-<div *ngIf="datasets.length && !isLoading" class="chart" style="margin-left: 10px; margin-right: 10px">
+<div class="chart" style="margin-left: 10px; margin-right: 10px">
   <canvas
+  *ngIf="!isLoading && datasets.length"
     style="border:1px solid"
     class="chart"
     baseChart

@@ -25,7 +25,21 @@ Chart.pluginService.register({
     ctx.restore();
   }
 });
-const colorList = ['#6E1E78', '#E05206', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#0088CE'];
+const colorList = [
+  '#6E1E78', '#E05206', '#A1006B', '#FFB612', '#009AA6', '#CD0037', '#0088CE',
+  '#e6194b',
+  '#3cb44b',
+  '#4363d8',
+  '#f58231',
+  '#f032e6',
+  '#fabebe',
+  '#008080',
+  '#e6beff',
+  '#9a6324',
+  '#800000',
+  '#808000',
+  '#000075'
+];
 
 interface Point {
   x: number;
@@ -91,7 +105,7 @@ export class HomeComponent implements OnInit {
     eel.expose(UpdateSimTime, 'update_sim_time_js');
     const walks = await eel.receive_walks_from_py()();
     this.data = JSON.parse(walks);
-    this.linesName = this.data.lines.map((x: Line) => (x.marches.length > 0) ? x.line_name : undefined);
+    this.linesName = this.data.lines.map((x: Line) => (x.marches.length > 0 ? x.line_name : undefined));
     this.linesName = this.linesName.filter((x: string) => x);
     this.initLines();
     this.initChart();
@@ -110,7 +124,7 @@ export class HomeComponent implements OnInit {
       const runInfo = this.runInfos[indexRunInfo];
       runInfo.hidden = false;
       this.maxStation = runInfo.maxStation > this.maxStation ? runInfo.maxStation : this.maxStation;
-      this.stations.push({line: runInfo.lineName, stations: runInfo.stations});
+      this.stations.push({ line: runInfo.lineName, stations: runInfo.stations });
     } else {
       this.datasets.forEach((element: any, index) => {
         if (element.selectedLine === lineName) {
@@ -120,13 +134,12 @@ export class HomeComponent implements OnInit {
       const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
       const runInfo = this.runInfos[indexRunInfo];
       runInfo.hidden = true;
-      this.maxStation =  Math.max(...this.runInfos.filter(x => !x.hidden).map(x => x.maxStation));
+      this.maxStation = Math.max(...this.runInfos.filter(x => !x.hidden).map(x => x.maxStation));
       this.stations = this.stations.filter(x => x.line !== lineName);
       this.datasets = this.datasets.filter((dataset: any) => dataset.selectedLine !== lineName);
     }
     if (this.chart) {
-
-    this.chart.update();
+      this.chart.update();
     }
   }
 
@@ -181,7 +194,7 @@ export class HomeComponent implements OnInit {
       stations1.coord.lat,
       stations1.coord.lon,
       bestStations.point.x,
-      bestStations.point.y,
+      bestStations.point.y
     );
     const percent = (100 * dist) / totalDist;
     const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
@@ -200,7 +213,7 @@ export class HomeComponent implements OnInit {
         prediction: false
       };
       _datasets.push(newDataset);
-      if ( this.datasets.findIndex((dataset: any) => walk.selectedLine === dataset.selectedLine) !== - 1) {
+      if (this.datasets.findIndex((dataset: any) => walk.selectedLine === dataset.selectedLine) !== -1) {
         this.datasets.push(newDataset);
       }
     } else {
@@ -248,18 +261,18 @@ export class HomeComponent implements OnInit {
     this.chart.update();
   }
 
-
   private updateInfo = (chart: any) => {
+    console.log(chart);
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
-    const _datasets = chart.chart.config.data.datasets;
+    const _datasets = this.datasets;
     this.intersect.forEach(intersect => {
       if (_datasets[intersect.datasetIndex]) {
         _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
       }
     });
     this.intersect = [];
-    this.datasets.forEach((dataset: any, index: number) => {
+    _datasets.forEach((dataset: any, index: number) => {
       if (
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
@@ -316,7 +329,7 @@ export class HomeComponent implements OnInit {
       }
     }
     this.chart.update();
-  }
+  };
 
   private initChart() {
     this.options = {
@@ -424,7 +437,6 @@ export class HomeComponent implements OnInit {
               x: this.minTime
             },
             rangeMax: {
-
               x: this.maxTime
             },
             onZoomComplete: this.updateInfo
@@ -498,8 +510,8 @@ export class HomeComponent implements OnInit {
             }
             return context.dataIndex === 0 || context.dataIndex === context.dataset.data.length - 1;
           }
-          }
         }
+      }
     };
   }
 
@@ -532,6 +544,7 @@ export class HomeComponent implements OnInit {
         minStation: minStation,
         maxStation: maxStation
       });
+      this.colorIndex += 1;
     });
   }
 }

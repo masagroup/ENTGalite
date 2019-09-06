@@ -159,7 +159,7 @@ export class HomeService {
         borderWidth: 1,
         selectedLine: selectedLine,
         prediction: true,
-        hidden: false,
+        hidden: false
       });
     });
     return { traces, stations, minTime, maxTime, minStation, maxStation, marchNames };
