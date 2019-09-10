@@ -77,7 +77,6 @@ export class HomeComponent implements OnInit {
   private actualWorker = 0;
   private hiddenDataSets: Chart.ChartDataSets[] = [];
   private stations: { line: string; stations: string[] }[] = [];
-  private intersect: { datasetIndex: number; dataIndex: number }[] = [];
   private simTime: Date;
   private colorIndex = 0;
   private runInfos: RunInfo[] = [];
@@ -134,11 +133,6 @@ export class HomeComponent implements OnInit {
       this.maxStation = runInfo.maxStation > this.maxStation ? runInfo.maxStation : this.maxStation;
       this.stations.push({ line: runInfo.lineName, stations: runInfo.stations });
     } else {
-      this.chart.config.data.datasets.forEach((element: any, index: number) => {
-        if (element.selectedLine === lineName) {
-          this.intersect = this.intersect.filter(x => x.dataIndex !== index);
-        }
-      });
       const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
       const runInfo = this.runInfos[indexRunInfo];
       runInfo.hidden = true;
@@ -187,16 +181,17 @@ export class HomeComponent implements OnInit {
         if (_datasets[indexRealTime]) {
           // @ts-ignore
           _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-          if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
+          if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 1000) {
             if (_datasets[indexRealTime].lastSimplify > 0) {
               _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
               _datasets[indexRealTime].data.concat(
-                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.001, true)
+                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.1, true)
               );
             } else {
               _datasets[indexRealTime].data = Simplify(
-                _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify, true),
-                0.001
+                _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify),
+                0.1,
+                true
               );
             }
             _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
@@ -293,21 +288,11 @@ export class HomeComponent implements OnInit {
         this.chart.options.scales.xAxes[0].time.unit = 'minute';
       }
     }
-    return;
-    const _datasets: any = this.chart.config.data.datasets;
-    this.intersect.forEach(intersect => {
-      if (_datasets[intersect.datasetIndex] && _datasets[intersect.datasetIndex][0]) {
-        if (!_datasets[intersect.datasetIndex].prediction) {
-          return;
-        }
-        _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
-      }
-    });
-    this.intersect = [];
+    const _datasets: any = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction);
+    _datasets.forEach((dataset: any) => {
+      dataset.data = dataset.data.filter((data: any) => data.coord);
+    })
     _datasets.forEach((dataset: any, index: number) => {
-      if (!dataset.prediction) {
-        return;
-      }
       if (
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
@@ -326,7 +311,6 @@ export class HomeComponent implements OnInit {
             min,
             this.maxStation
           );
-          this.intersect.push({ datasetIndex: index, dataIndex: i });
           _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;
         }
@@ -343,11 +327,7 @@ export class HomeComponent implements OnInit {
             max,
             this.maxStation
           );
-          this.intersect.push({ datasetIndex: index, dataIndex: i });
-          if (typeof intersect.x === 'string') {
-            continue;
-          }
-          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
+          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y});
           break;
         }
       }
@@ -516,30 +496,14 @@ export class HomeComponent implements OnInit {
           },
           display: (context: any) => {
             const min = context.chart.options.scales.xAxes[0].time.min;
-            const len = context.dataset.data.length - 1;
-            if (context.dataIndex === 0 && context.dataset.data[0].x < min) {
+            const len = context.dataset.data.length - 1
+            const dataIndex = context.dataIndex;
+            const datasetIndex = context.datasetIndex;
+            const dataset = this.chart.config.data.datasets[datasetIndex];
+            if (dataset.data[dataIndex].x < min || !dataset.prediction) {
               return false;
             }
-            if (context.dataIndex === len && context.dataset.data[len].x < min) {
-              return false;
-            }
-            //if (context.dataIndex === len && !context.dataset.prediction) {
-            //  return false;
-            //}
-            if (
-              this.simTime &&
-              context.dataIndex === 0 &&
-              context.dataset.prediction &&
-              this.simTime.getTime() === context.dataset.data[context.dataIndex].x
-            ) {
-              return false;
-            }
-            for (const intersect of this.intersect) {
-              if (intersect.dataIndex === context.dataIndex && intersect.datasetIndex === context.datasetIndex) {
-                return true;
-              }
-            }
-            return context.dataIndex === 0 || context.dataIndex === context.dataset.data.length - 1;
+            return dataIndex === 0 || dataIndex === len || !dataset.data[dataIndex].coord;
           }
         }
       }

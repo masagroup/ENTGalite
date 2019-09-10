@@ -38,15 +38,16 @@ function project(p: Point, a: Point, b: Point) {
   };
 }
 addEventListener('message', (message: any) => {
-  const walk = message.data.walk;
+  const walk = message.data.walk.filter((data: any) => data && data.coord);
   const coordTrain = message.data.coordTrain;
   const runName = message.data.runName;
   let bestStations: any;
   let stations1: any;
   let stations2: any;
   let minDist: number;
+  const len =  walk.length - 1;
   walk.forEach((element: any, i: number) => {
-    if (!walk[i + 1] || !walk[i] || !walk[i + 1].coord || !walk[i].coord) {
+    if (i + 1 > len) {
       return;
     }
     const coord1: Point = { x: element.coord.lat, y: element.coord.lon };
