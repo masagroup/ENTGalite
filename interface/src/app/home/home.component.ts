@@ -262,14 +262,12 @@ export class HomeComponent implements OnInit {
 
   private onPanZoom = () => {
     this.onUpdate = true;
-  }
+  };
 
   private onEndPanZoom = (chart: any) => {
     this.onUpdate = false;
     this.updateInfo(chart.chart);
-  }
-
-
+  };
 
   private updateInfo = (chart: any) => {
     if (this.onUpdate) {
@@ -291,7 +289,7 @@ export class HomeComponent implements OnInit {
     const _datasets: any = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction);
     _datasets.forEach((dataset: any) => {
       dataset.data = dataset.data.filter((data: any) => data.coord);
-    })
+    });
     _datasets.forEach((dataset: any, index: number) => {
       if (
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
@@ -327,7 +325,7 @@ export class HomeComponent implements OnInit {
             max,
             this.maxStation
           );
-          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y});
+          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;
         }
       }
@@ -349,7 +347,7 @@ export class HomeComponent implements OnInit {
       animation: {
         duration: 0
       },
-      hover: {mode: null},
+      hover: { mode: null },
       events: [],
       layout: {
         padding: {
@@ -496,7 +494,7 @@ export class HomeComponent implements OnInit {
           },
           display: (context: any) => {
             const min = context.chart.options.scales.xAxes[0].time.min;
-            const len = context.dataset.data.length - 1
+            const len = context.dataset.data.length - 1;
             const dataIndex = context.dataIndex;
             const datasetIndex = context.datasetIndex;
             const dataset = this.chart.config.data.datasets[datasetIndex];

@@ -45,7 +45,7 @@ addEventListener('message', (message: any) => {
   let stations1: any;
   let stations2: any;
   let minDist: number;
-  const len =  walk.length - 1;
+  const len = walk.length - 1;
   walk.forEach((element: any, i: number) => {
     if (i + 1 > len) {
       return;
