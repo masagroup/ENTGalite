@@ -185,12 +185,12 @@ export class HomeComponent implements OnInit {
             if (_datasets[indexRealTime].lastSimplify > 0) {
               _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
               _datasets[indexRealTime].data.concat(
-                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.1, true)
+                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0, true)
               );
             } else {
               _datasets[indexRealTime].data = Simplify(
                 _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify),
-                0.1,
+                0,
                 true
               );
             }
