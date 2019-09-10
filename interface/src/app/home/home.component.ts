@@ -1,6 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
-import { BaseChartDirective } from 'ng2-charts';
 import { Context } from 'chartjs-plugin-datalabels';
 
 import { HomeService, MarchesByLines, Line, Point, RunInfo } from './home.service';
@@ -85,6 +84,7 @@ export class HomeComponent implements OnInit {
   private maxStation: number;
   private minTime: number;
   private maxTime: number;
+  private onUpdate: boolean = false;
   private data: MarchesByLines;
 
   constructor(private homeService: HomeService) {}
@@ -191,12 +191,12 @@ export class HomeComponent implements OnInit {
             if (_datasets[indexRealTime].lastSimplify > 0) {
               _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
               _datasets[indexRealTime].data.concat(
-                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.01)
+                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.001, true)
               );
             } else {
               _datasets[indexRealTime].data = Simplify(
-                _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify),
-                0.2
+                _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify, true),
+                0.001
               );
             }
             _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
@@ -233,8 +233,8 @@ export class HomeComponent implements OnInit {
       offset = this.simTime.getTime() - _datasets[indexRealTime].data[0].x;
       _datasets.splice(indexRealTime, 1);
     }
-    this.chart.chart.options.scales.xAxes[0].time.min += offset;
-    this.chart.chart.options.scales.xAxes[0].time.max += offset;
+    this.chart.options.scales.xAxes[0].time.min += offset;
+    this.chart.options.scales.xAxes[0].time.max += offset;
     if (data[0].x < _options.plugins.zoom.pan.rangeMin.x) {
       _options.plugins.zoom.pan.rangeMin = {
         x: data[0].x
@@ -261,14 +261,39 @@ export class HomeComponent implements OnInit {
       borderWidth: 1,
       realTime: true
     });
-    this.chart.update();
     this.updateInfo(this.chart);
+    this.chart.update();
   }
 
+  private onPanZoom = () => {
+    this.onUpdate = true;
+  }
+
+  private onEndPanZoom = (chart: any) => {
+    this.onUpdate = false;
+    this.updateInfo(chart.chart);
+  }
+
+
+
   private updateInfo = (chart: any) => {
+    if (this.onUpdate) {
+      return;
+    }
+    const min = this.chart.options.scales.xAxes[0].time.min;
+    const max = this.chart.options.scales.xAxes[0].time.max;
+    if (max - min > 7200000) {
+      if (chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
+        this.chart.options.scales.xAxes[0].time.unitStepSize = 2;
+        this.chart.options.scales.xAxes[0].time.unit = 'hour';
+      }
+    } else {
+      if (chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
+        this.chart.options.scales.xAxes[0].time.unitStepSize = 10;
+        this.chart.options.scales.xAxes[0].time.unit = 'minute';
+      }
+    }
     return;
-    const min = chart.chart.options.scales.xAxes[0].time.min;
-    const max = chart.chart.options.scales.xAxes[0].time.max;
     const _datasets: any = this.chart.config.data.datasets;
     this.intersect.forEach(intersect => {
       if (_datasets[intersect.datasetIndex] && _datasets[intersect.datasetIndex][0]) {
@@ -327,17 +352,6 @@ export class HomeComponent implements OnInit {
         }
       }
     });
-    if (max - min > 7200000) {
-      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
-        chart.chart.options.scales.xAxes[0].time.unitStepSize = 2;
-        chart.chart.options.scales.xAxes[0].time.unit = 'hour';
-      }
-    } else {
-      if (chart.chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
-        chart.chart.options.scales.xAxes[0].time.unitStepSize = 10;
-        chart.chart.options.scales.xAxes[0].time.unit = 'minute';
-      }
-    }
     this.chart.update();
   };
 
@@ -440,7 +454,8 @@ export class HomeComponent implements OnInit {
             rangeMax: {
               x: this.maxTime + 60000000 * 24
             },
-            onPanComplete: this.updateInfo
+            onPanComplete: this.onEndPanZoom,
+            onPan: this.onPanZoom
           },
           zoom: {
             enabled: true,
@@ -451,7 +466,8 @@ export class HomeComponent implements OnInit {
             rangeMax: {
               x: this.maxTime + 60000000 * 24
             },
-            onZoomComplete: this.updateInfo
+            onZoomComplete: this.onEndPanZoom,
+            onPan: this.onPanZoom
           }
         },
         datalabels: {
@@ -507,9 +523,9 @@ export class HomeComponent implements OnInit {
             if (context.dataIndex === len && context.dataset.data[len].x < min) {
               return false;
             }
-            if (context.dataIndex === len && !context.dataset.prediction) {
-              return false;
-            }
+            //if (context.dataIndex === len && !context.dataset.prediction) {
+            //  return false;
+            //}
             if (
               this.simTime &&
               context.dataIndex === 0 &&
