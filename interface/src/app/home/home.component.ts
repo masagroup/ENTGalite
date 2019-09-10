@@ -208,9 +208,15 @@ export class HomeComponent implements OnInit {
       if (_datasets[indexRealTime]) {
         // @ts-ignore
         _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-        if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 100) {
-        _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify
-        _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 5));
+        if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
+          console.log(_datasets[indexRealTime].lastSimplify);
+          if (_datasets[indexRealTime].lastSimplify > 0) {
+            _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
+            _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify)));
+          } else {
+            _datasets[indexRealTime].data = Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify));
+          }
+            
         _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
         }
       }
@@ -272,14 +278,20 @@ export class HomeComponent implements OnInit {
   private updateInfo = (chart: any) => {
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
-    const _datasets = this.datasets;
+    const _datasets: any = this.datasets;
     this.intersect.forEach(intersect => {
-      if (_datasets[intersect.datasetIndex]) {
+      if (_datasets[intersect.datasetIndex] && _datasets[intersect.datasetIndex][0]) {
+        if (!_datasets[intersect.datasetIndex].prediction) {
+          return;
+        }
         _datasets[intersect.datasetIndex].data.splice(intersect.dataIndex, 1);
       }
     });
     this.intersect = [];
     _datasets.forEach((dataset: any, index: number) => {
+      if (!dataset.prediction) {
+        return;
+      }
       if (
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
