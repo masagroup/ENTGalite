@@ -220,7 +220,6 @@ export class HomeComponent implements OnInit {
         }
       }
     }
-    this.chart.update();
   }
 
   private updateRealTime() {
