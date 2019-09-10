@@ -212,11 +212,10 @@ export class HomeComponent implements OnInit {
           console.log(_datasets[indexRealTime].lastSimplify);
           if (_datasets[indexRealTime].lastSimplify > 0) {
             _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
-            _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify)));
+            _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify, 0.2)));
           } else {
-            _datasets[indexRealTime].data = Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify));
+            _datasets[indexRealTime].data = Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify, 0.2));
           }
-            
         _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
         }
       }
