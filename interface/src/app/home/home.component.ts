@@ -134,7 +134,7 @@ export class HomeComponent implements OnInit {
   private async updateTrain(runName: string, coordTrain: Point) {
     const _datasets: any = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
-    if (index === -1) {
+    if (index === -1 || this.stations.findIndex(station => station.line === _datasets[index].selectedLine) === -1) {
       return;
     }
     const walk = <any>_datasets[index];
@@ -201,14 +201,14 @@ export class HomeComponent implements OnInit {
         lastSimplify: 0
       };
       _datasets.push(newDataset);
-      if (this.datasets.findIndex((dataset: any) => walk.selectedLine === dataset.selectedLine) !== -1) {
+      if (this.stations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
         this.datasets.push(newDataset);
       }
     } else {
       if (_datasets[indexRealTime]) {
         // @ts-ignore
         _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-        if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
+        if (false && _datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
           console.log(_datasets[indexRealTime].lastSimplify);
           if (_datasets[indexRealTime].lastSimplify > 0) {
             _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
@@ -514,10 +514,8 @@ export class HomeComponent implements OnInit {
             if (context.dataIndex === len && context.dataset.data[len].x < min) {
               return false;
             }
-            for (const intersect of this.intersect) {
-              if (intersect.dataIndex === context.dataIndex && intersect.datasetIndex === context.datasetIndex) {
-                return true;
-              }
+            if (context.dataIndex === len && !context.dataset.prediction) {
+              return false;
             }
             if (
               this.simTime &&
@@ -526,6 +524,11 @@ export class HomeComponent implements OnInit {
               this.simTime.getTime() === context.dataset.data[context.dataIndex].x
             ) {
               return false;
+            }
+            for (const intersect of this.intersect) {
+              if (intersect.dataIndex === context.dataIndex && intersect.datasetIndex === context.datasetIndex) {
+                return true;
+              }
             }
             return context.dataIndex === 0 || context.dataIndex === context.dataset.data.length - 1;
           }
