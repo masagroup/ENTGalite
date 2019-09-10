@@ -71,7 +71,7 @@ export class HomeComponent implements OnInit {
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
-    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' })
   ];
   readonly maxWorker = this.worker.length - 1;
   private chart: any;
@@ -125,8 +125,7 @@ export class HomeComponent implements OnInit {
     if (checked) {
       _hiddenDataSets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
-          console.log(this.chart)
-         this.chart.config.data.datasets.push(dataset);
+          this.chart.config.data.datasets.push(dataset);
         }
       });
       const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
@@ -135,7 +134,7 @@ export class HomeComponent implements OnInit {
       this.maxStation = runInfo.maxStation > this.maxStation ? runInfo.maxStation : this.maxStation;
       this.stations.push({ line: runInfo.lineName, stations: runInfo.stations });
     } else {
-     this.chart.config.data.datasets.forEach((element: any, index: number) => {
+      this.chart.config.data.datasets.forEach((element: any, index: number) => {
         if (element.selectedLine === lineName) {
           this.intersect = this.intersect.filter(x => x.dataIndex !== index);
         }
@@ -145,7 +144,9 @@ export class HomeComponent implements OnInit {
       runInfo.hidden = true;
       this.maxStation = Math.max(...this.runInfos.filter(x => !x.hidden).map(x => x.maxStation));
       this.stations = this.stations.filter(x => x.line !== lineName);
-     this.chart.config.data.datasets =this.chart.config.data.datasets.filter((dataset: any) => dataset.selectedLine !== lineName);
+      this.chart.config.data.datasets = this.chart.config.data.datasets.filter(
+        (dataset: any) => dataset.selectedLine !== lineName
+      );
     }
     if (this.chart) {
       this.chart.update();
@@ -180,7 +181,7 @@ export class HomeComponent implements OnInit {
         };
         _datasets.push(newDataset);
         if (this.stations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
-         this.chart.config.data.datasets.push(newDataset);
+          this.chart.config.data.datasets.push(newDataset);
         }
       } else {
         if (_datasets[indexRealTime]) {
@@ -224,7 +225,7 @@ export class HomeComponent implements OnInit {
         y: this.maxStation
       }
     ];
-    const _datasets: any =this.chart.config.data.datasets;
+    const _datasets: any = this.chart.config.data.datasets;
     const _options = this.chart.options;
     const indexRealTime = _datasets.findIndex((x: any) => x.realTime === true);
     let offset = 0;
@@ -268,7 +269,7 @@ export class HomeComponent implements OnInit {
     return;
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
-    const _datasets: any =this.chart.config.data.datasets;
+    const _datasets: any = this.chart.config.data.datasets;
     this.intersect.forEach(intersect => {
       if (_datasets[intersect.datasetIndex] && _datasets[intersect.datasetIndex][0]) {
         if (!_datasets[intersect.datasetIndex].prediction) {
@@ -354,7 +355,8 @@ export class HomeComponent implements OnInit {
       animation: {
         duration: 0
       },
-
+      hover: {mode: null},
+      events: [],
       layout: {
         padding: {
           left: 50,
@@ -527,10 +529,13 @@ export class HomeComponent implements OnInit {
       }
     };
     const canvas = document.getElementById('chart') as HTMLCanvasElement;
-   this.chart =  new Chart.Chart(canvas, {type: 'scatter', data: {
-    datasets: []
-   },
-   options: options});
+    this.chart = new Chart.Chart(canvas, {
+      type: 'scatter',
+      data: {
+        datasets: []
+      },
+      options: options
+    });
   }
 
   private initLines() {

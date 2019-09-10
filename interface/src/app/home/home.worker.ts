@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 
 interface Point {
-    x: number;
-    y: number;
-  }
+  x: number;
+  y: number;
+}
 function deg2rad(deg: number) {
-    return deg * (Math.PI / 180);
+  return deg * (Math.PI / 180);
 }
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371;
