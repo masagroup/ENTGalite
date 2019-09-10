@@ -185,12 +185,12 @@ export class HomeComponent implements OnInit {
             if (_datasets[indexRealTime].lastSimplify > 0) {
               _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
               _datasets[indexRealTime].data.concat(
-                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.01, true)
+                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.00001, true)
               );
             } else {
               _datasets[indexRealTime].data = Simplify(
                 _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify),
-                0.01,
+                0.00001,
                 true
               );
             }
@@ -256,6 +256,9 @@ export class HomeComponent implements OnInit {
       borderWidth: 1,
       realTime: true
     });
+    if (this.onUpdate) {
+      return;
+    }
     this.updateInfo(this.chart);
     this.chart.update();
   }
@@ -270,9 +273,6 @@ export class HomeComponent implements OnInit {
   };
 
   private updateInfo = (chart: any) => {
-    if (this.onUpdate) {
-      return;
-    }
     const min = this.chart.options.scales.xAxes[0].time.min;
     const max = this.chart.options.scales.xAxes[0].time.max;
     if (max - min > 7200000) {
