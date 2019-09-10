@@ -197,7 +197,8 @@ export class HomeComponent implements OnInit {
         hidden: false,
         pointRadius: 0,
         borderWidth: 3,
-        prediction: false
+        prediction: false,
+        lastSimplify: 0
       };
       _datasets.push(newDataset);
       if (this.datasets.findIndex((dataset: any) => walk.selectedLine === dataset.selectedLine) !== -1) {
