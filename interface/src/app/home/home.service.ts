@@ -175,39 +175,6 @@ export class HomeService {
     });
     return { traces, stations, minTime, maxTime, minStation, maxStation, marchNames };
   }
-
-  project(p: Point, a: Point, b: Point) {
-    const atob = { x: b.x - a.x, y: b.y - a.y };
-    const atop = { x: p.x - a.x, y: p.y - a.y };
-    const len = atob.x * atob.x + atob.y * atob.y;
-    let dot = atop.x * atob.x + atop.y * atob.y;
-    const t = Math.min(1, Math.max(0, dot / len));
-
-    dot = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
-
-    return {
-      point: {
-        x: a.x + atob.x * t,
-        y: a.y + atob.y * t
-      },
-      left: dot < 1,
-      dot: dot,
-      t: t
-    };
-  }
-
-  getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-    const R = 6371;
-    const dLat = this.deg2rad(lat2 - lat1);
-    const dLon = this.deg2rad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c; // Distance in km
-    return d;
-  }
-
   line_intersect(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number) {
     let ua,
       ub,
@@ -223,9 +190,5 @@ export class HomeService {
       seg1: ua >= 0 && ua <= 1,
       seg2: ub >= 0 && ub <= 1
     };
-  }
-
-  private deg2rad(deg: number) {
-    return deg * (Math.PI / 180);
   }
 }

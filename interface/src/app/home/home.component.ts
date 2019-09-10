@@ -51,11 +51,31 @@ const colorList = [
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  @ViewChild(BaseChartDirective, { static: false }) chart: BaseChartDirective;
   isLoading = true;
-  options: Chart.ChartOptions;
-  datasets: Chart.ChartDataSets[] = [];
   linesName: string[] = [];
+  private worker = [
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+    new Worker('./home.worker', { type: 'module' }),
+  ];
+  readonly maxWorker = this.worker.length - 1;
+  private chart: any;
+  private actualWorker = 0;
   private hiddenDataSets: Chart.ChartDataSets[] = [];
   private stations: { line: string; stations: string[] }[] = [];
   private intersect: { datasetIndex: number; dataIndex: number }[] = [];
@@ -83,7 +103,7 @@ export class HomeComponent implements OnInit {
       this.updateTrain(runName, coordTrain);
     };
     const UpdateSimTime = (data: string) => {
-      if (!this.chart) {
+      if (!this.chart && !this.chart.config.datasets) {
         return;
       }
       this.simTime = this.homeService.parseDateTime(data);
@@ -105,7 +125,8 @@ export class HomeComponent implements OnInit {
     if (checked) {
       _hiddenDataSets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
-          this.datasets.push(dataset);
+          console.log(this.chart)
+         this.chart.config.data.datasets.push(dataset);
         }
       });
       const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
@@ -114,7 +135,7 @@ export class HomeComponent implements OnInit {
       this.maxStation = runInfo.maxStation > this.maxStation ? runInfo.maxStation : this.maxStation;
       this.stations.push({ line: runInfo.lineName, stations: runInfo.stations });
     } else {
-      this.datasets.forEach((element: any, index) => {
+     this.chart.config.data.datasets.forEach((element: any, index: number) => {
         if (element.selectedLine === lineName) {
           this.intersect = this.intersect.filter(x => x.dataIndex !== index);
         }
@@ -124,7 +145,7 @@ export class HomeComponent implements OnInit {
       runInfo.hidden = true;
       this.maxStation = Math.max(...this.runInfos.filter(x => !x.hidden).map(x => x.maxStation));
       this.stations = this.stations.filter(x => x.line !== lineName);
-      this.datasets = this.datasets.filter((dataset: any) => dataset.selectedLine !== lineName);
+     this.chart.config.data.datasets =this.chart.config.data.datasets.filter((dataset: any) => dataset.selectedLine !== lineName);
     }
     if (this.chart) {
       this.chart.update();
@@ -138,87 +159,57 @@ export class HomeComponent implements OnInit {
       return;
     }
     const walk = <any>_datasets[index];
-    let bestStations: any;
-    let stations1: any;
-    let stations2: any;
-    let minDist: number;
-    walk.data.forEach((element: any, i: number) => {
-      if (!walk.data[i + 1] || !walk.data[i] || !walk.data[i + 1].coord || !walk.data[i].coord) {
-        return;
-      }
-      const coord1: Point = { x: element.coord.lat, y: element.coord.lon };
-      const coord2: Point = {
-        x: walk.data[i + 1].coord.lat,
-        y: walk.data[i + 1].coord.lon
-      };
-      const position = this.homeService.project(coordTrain, coord1, coord2);
-      if (Number.isNaN(position.t)) {
-        return;
-      }
-      const testDist = this.homeService.getDistanceFromLatLonInKm(
-        position.point.x,
-        position.point.y,
-        coordTrain.x,
-        coordTrain.y
-      );
-      if (!bestStations || testDist < minDist) {
-        minDist = testDist;
-        bestStations = position;
-        stations1 = walk.data[i];
-        stations2 = walk.data[i + 1];
-      }
-    });
-    if (!bestStations) {
-      return;
-    }
-    const totalDist = this.homeService.getDistanceFromLatLonInKm(
-      stations1.coord.lat,
-      stations1.coord.lon,
-      stations2.coord.lat,
-      stations2.coord.lon
-    );
-    const dist = this.homeService.getDistanceFromLatLonInKm(
-      stations1.coord.lat,
-      stations1.coord.lon,
-      bestStations.point.x,
-      bestStations.point.y
-    );
-    const percent = (100 * dist) / totalDist;
-    const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
-    const indexRealTime = _datasets.findIndex((x: any) => x.label === runName && !x.prediction);
-    if (indexRealTime === -1) {
-      const newDataset = {
-        type: 'scatter',
-        selectedLine: walk.selectedLine,
-        label: runName,
-        data: [{ x: this.simTime, y: y }],
-        showLine: true,
-        borderColor: walk.borderColor,
-        hidden: false,
-        pointRadius: 0,
-        borderWidth: 3,
-        prediction: false,
-        lastSimplify: 0
-      };
-      _datasets.push(newDataset);
-      if (this.stations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
-        this.datasets.push(newDataset);
-      }
-    } else {
-      if (_datasets[indexRealTime]) {
-        // @ts-ignore
-        _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-        if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
-          console.log(_datasets[indexRealTime].lastSimplify);
-          if (_datasets[indexRealTime].lastSimplify > 0) {
-            _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
-            _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.2));
-          } else {
-            _datasets[indexRealTime].data = Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.2);
+
+    this.worker[this.actualWorker].onmessage = ({ data }) => {
+      const runName = data.runName;
+      const y = data.y;
+      const indexRealTime = _datasets.findIndex((x: any) => x.label === runName && !x.prediction);
+      if (indexRealTime === -1) {
+        const newDataset = {
+          type: 'scatter',
+          selectedLine: walk.selectedLine,
+          label: runName,
+          data: [{ x: this.simTime, y: y }],
+          showLine: true,
+          borderColor: walk.borderColor,
+          hidden: false,
+          pointRadius: 0,
+          borderWidth: 3,
+          prediction: false,
+          lastSimplify: 0
+        };
+        _datasets.push(newDataset);
+        if (this.stations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
+         this.chart.config.data.datasets.push(newDataset);
+        }
+      } else {
+        if (_datasets[indexRealTime]) {
+          // @ts-ignore
+          _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
+          if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
+            if (_datasets[indexRealTime].lastSimplify > 0) {
+              _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
+              _datasets[indexRealTime].data.concat(
+                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.01)
+              );
+            } else {
+              _datasets[indexRealTime].data = Simplify(
+                _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify),
+                0.2
+              );
+            }
+            _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
           }
-        _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
         }
       }
+    };
+    const clonedWalk = JSON.parse(JSON.stringify(walk.data));
+
+    const clonedCoordTrain = JSON.parse(JSON.stringify(coordTrain));
+    this.worker[this.actualWorker].postMessage({ walk: clonedWalk, coordTrain: clonedCoordTrain, runName });
+    this.actualWorker += 1;
+    if (this.actualWorker > this.maxWorker) {
+      this.actualWorker = 0;
     }
   }
 
@@ -233,7 +224,7 @@ export class HomeComponent implements OnInit {
         y: this.maxStation
       }
     ];
-    const _datasets: any = this.datasets;
+    const _datasets: any =this.chart.config.data.datasets;
     const _options = this.chart.options;
     const indexRealTime = _datasets.findIndex((x: any) => x.realTime === true);
     let offset = 0;
@@ -274,9 +265,10 @@ export class HomeComponent implements OnInit {
   }
 
   private updateInfo = (chart: any) => {
+    return;
     const min = chart.chart.options.scales.xAxes[0].time.min;
     const max = chart.chart.options.scales.xAxes[0].time.max;
-    const _datasets: any = this.datasets;
+    const _datasets: any =this.chart.config.data.datasets;
     this.intersect.forEach(intersect => {
       if (_datasets[intersect.datasetIndex] && _datasets[intersect.datasetIndex][0]) {
         if (!_datasets[intersect.datasetIndex].prediction) {
@@ -349,7 +341,7 @@ export class HomeComponent implements OnInit {
   };
 
   private initChart() {
-    this.options = {
+    const options: any = {
       type: 'scatter',
       maintainAspectRatio: false,
       responsive: true,
@@ -534,6 +526,11 @@ export class HomeComponent implements OnInit {
         }
       }
     };
+    const canvas = document.getElementById('chart') as HTMLCanvasElement;
+   this.chart =  new Chart.Chart(canvas, {type: 'scatter', data: {
+    datasets: []
+   },
+   options: options});
   }
 
   private initLines() {

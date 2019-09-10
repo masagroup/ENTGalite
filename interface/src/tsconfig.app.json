@@ -9,7 +9,8 @@
   "exclude": [
     "test.ts",
     "**/*.spec.ts",
-    "**/*.mock.ts"
+    "**/*.mock.ts",
+    "**/*.worker.ts"
   ],
   "angularCompilerOptions": {
     "preserveWhitespaces": true

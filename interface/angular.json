@@ -23,7 +23,8 @@
             "polyfills": "src/polyfills.ts",
             "assets": ["src/favicon.ico", "src/apple-touch-icon.png", "src/robots.txt", "src/assets"],
             "styles": ["src/main.scss"],
-            "scripts": []
+            "scripts": [],
+            "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
             "production": {
@@ -78,7 +79,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": ["src/tsconfig.app.json"],
+            "tsConfig": ["src/tsconfig.app.json", "tsconfig.worker.json"],
             "exclude": ["**/node_modules/**"]
           }
         }
