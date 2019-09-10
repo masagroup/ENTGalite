@@ -4,7 +4,8 @@ import { Context } from 'chartjs-plugin-datalabels';
 
 import { HomeService, MarchesByLines, Line, Point, RunInfo } from './home.service';
 import * as Chart from 'chart.js';
-import { Simplify } from 'simplify-ts';
+//@ts-ignore
+const simplify = require('simplify-js');
 
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
@@ -183,16 +184,21 @@ export class HomeComponent implements OnInit {
           _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
           if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 500) {
             if (_datasets[indexRealTime].lastSimplify > 0) {
+              const data = _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify);
+              const simplified = simplify(
+                data,
+                1
+              );
+              console.log(simplified);
               _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
-              _datasets[indexRealTime].data.concat(
-                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.00001, true)
-              );
+              _datasets[indexRealTime].data.concat(simplified);
             } else {
-              _datasets[indexRealTime].data = Simplify(
-                _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify),
-                0.00001,
-                true
+              const data = _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify);
+              _datasets[indexRealTime].data = simplify(
+                data,
+                1
               );
+              console.log(_datasets[indexRealTime].data);
             }
             _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
           }

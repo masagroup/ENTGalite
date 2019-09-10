@@ -42,7 +42,6 @@
     "ngx-material-file-input": "^2.0.0",
     "rxjs": "^6.5.3",
     "simplify-js": "^1.2.3",
-    "simplify-ts": "^1.0.1",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {
