@@ -208,13 +208,13 @@ export class HomeComponent implements OnInit {
       if (_datasets[indexRealTime]) {
         // @ts-ignore
         _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-        if (false && _datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
+        if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 300) {
           console.log(_datasets[indexRealTime].lastSimplify);
           if (_datasets[indexRealTime].lastSimplify > 0) {
             _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
-            _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify, 0.2)));
+            _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.2));
           } else {
-            _datasets[indexRealTime].data = Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify, 0.2));
+            _datasets[indexRealTime].data = Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.2);
           }
         _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
         }
