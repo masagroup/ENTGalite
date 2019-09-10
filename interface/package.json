@@ -30,9 +30,9 @@
     "@ngx-translate/core": "^11.0.1",
     "chart.js": "^2.8.0",
     "chartjs-plugin-annotation": "^0.5.7",
+    "chartjs-plugin-datalabels": "^0.6.0",
     "chartjs-plugin-streaming": "^1.8.0",
     "chartjs-plugin-zoom": "^0.7.3",
-    "chartjs-plugin-datalabels": "^0.6.0",
     "core-js": "^3.2.1",
     "hammerjs": "^2.0.8",
     "material-design-icons": "^3.0.1",
@@ -41,6 +41,8 @@
     "ng2-charts": "^2.3.0",
     "ngx-material-file-input": "^2.0.0",
     "rxjs": "^6.5.3",
+    "simplify-js": "^1.2.3",
+    "simplify-ts": "^1.0.1",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {

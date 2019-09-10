@@ -5,6 +5,7 @@ import { Context } from 'chartjs-plugin-datalabels';
 
 import { HomeService, MarchesByLines, Line, Point, RunInfo } from './home.service';
 import * as Chart from 'chart.js';
+import { Simplify } from 'simplify-ts';
 
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
@@ -131,7 +132,7 @@ export class HomeComponent implements OnInit {
   }
 
   private async updateTrain(runName: string, coordTrain: Point) {
-    const _datasets = this.hiddenDataSets;
+    const _datasets: any = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
     if (index === -1) {
       return;
@@ -203,8 +204,15 @@ export class HomeComponent implements OnInit {
         this.datasets.push(newDataset);
       }
     } else {
-      // @ts-ignore
-      _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
+      if (_datasets[indexRealTime]) {
+        // @ts-ignore
+        _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
+        if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 100) {
+        _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify
+        _datasets[indexRealTime].data.concat(Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 5));
+        _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
+        }
+      }
     }
     this.chart.update();
   }
