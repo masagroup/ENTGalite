@@ -181,16 +181,16 @@ export class HomeComponent implements OnInit {
         if (_datasets[indexRealTime]) {
           // @ts-ignore
           _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-          if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 1000) {
+          if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 500) {
             if (_datasets[indexRealTime].lastSimplify > 0) {
               _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
               _datasets[indexRealTime].data.concat(
-                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0, true)
+                Simplify(_datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify), 0.01, true)
               );
             } else {
               _datasets[indexRealTime].data = Simplify(
                 _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify),
-                0,
+                0.01,
                 true
               );
             }
@@ -287,10 +287,8 @@ export class HomeComponent implements OnInit {
       }
     }
     const _datasets: any = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction);
-    _datasets.forEach((dataset: any) => {
-      dataset.data = dataset.data.filter((data: any) => data.coord);
-    });
     _datasets.forEach((dataset: any, index: number) => {
+      _datasets[index].data = _datasets[index].data.filter((data: any) => data.coord);
       if (
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
