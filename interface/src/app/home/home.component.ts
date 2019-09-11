@@ -502,6 +502,9 @@ export class HomeComponent implements OnInit {
             const dataIndex = context.dataIndex;
             const datasetIndex = context.datasetIndex;
             const dataset = this.chart.config.data.datasets[datasetIndex];
+            if (dataset.realTime) {
+              return true;
+            }
             if (dataset.data[dataIndex].x < min || !dataset.prediction) {
               return false;
             }
