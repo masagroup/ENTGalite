@@ -185,19 +185,13 @@ export class HomeComponent implements OnInit {
           if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 500) {
             if (_datasets[indexRealTime].lastSimplify > 0) {
               const data = _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify);
-              const simplified = simplify(
-                data,
-                1
-              );
+              const simplified = simplify(data, 1);
               console.log(simplified);
               _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
               _datasets[indexRealTime].data.concat(simplified);
             } else {
               const data = _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify);
-              _datasets[indexRealTime].data = simplify(
-                data,
-                1
-              );
+              _datasets[indexRealTime].data = simplify(data, 1);
               console.log(_datasets[indexRealTime].data);
             }
             _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
