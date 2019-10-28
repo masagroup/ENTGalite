@@ -1,11 +1,11 @@
-# ENT Galite
+# ENT GET
 
 
 ## Installation Developpement
 
 Install pysword see https://github.com/masagroup/pysword
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install ENT galite.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install ENT GET.
 
 Python and node.js is required for this project
 
@@ -44,7 +44,7 @@ for more usage options.
 
 Install pysword see https://github.com/masagroup/pysword
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install ENT galite.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install ENT GET.
 
 Python and node.js is required for this project
 
