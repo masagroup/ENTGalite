@@ -275,17 +275,6 @@ export class HomeComponent implements OnInit {
   private updateInfo = (chart: any) => {
     const min = this.chart.options.scales.xAxes[0].time.min;
     const max = this.chart.options.scales.xAxes[0].time.max;
-    if (max - min > 7200000) {
-      if (chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
-        this.chart.options.scales.xAxes[0].time.unitStepSize = 2;
-        this.chart.options.scales.xAxes[0].time.unit = 'hour';
-      }
-    } else {
-      if (chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
-        this.chart.options.scales.xAxes[0].time.unitStepSize = 10;
-        this.chart.options.scales.xAxes[0].time.unit = 'minute';
-      }
-    }
     const _datasets: any = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction);
     _datasets.forEach((dataset: any, index: number) => {
       _datasets[index].data = _datasets[index].data.filter((data: any) => data.coord);
@@ -548,5 +537,10 @@ export class HomeComponent implements OnInit {
       });
       this.colorIndex += 1;
     });
+  }
+
+  changeRange(unit: string, offset: number) {
+    this.chart.options.scales.xAxes[0].time.unitStepSize = offset;
+    this.chart.options.scales.xAxes[0].time.unit = unit;
   }
 }

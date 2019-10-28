@@ -10,13 +10,23 @@
     {{ lineName }}
   </mat-checkbox>
 </div>
-<mat-form-field>
-  <mat-label>Manchette</mat-label>
-  <mat-select>
-    <mat-option value="Manchette 1">Manchette 1</mat-option>
-    <mat-option value="Manchette 2">Manchette 2</mat-option>
-  </mat-select>
-</mat-form-field>
-<div class="chart" style="margin-left: 10px; margin-right: 10px">
+<div class="row mt-3 mb-3 ml-3">
+  <mat-form-field>
+    <mat-label>Manchette</mat-label>
+    <mat-select>
+      <mat-option value="Manchette 1">Manchette 1</mat-option>
+      <mat-option value="Manchette 2">Manchette 2</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <div class="ml-3 mt-3">
+    <div class="btn-group" role="group" aria-label="Basic example">
+      <button type="button" class="btn btn-secondary" (click)="changeRange('hour', 1)">1h</button>
+      <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 30)">30min</button>
+      <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 15)">15min</button>
+      <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 5)">5min</button>
+    </div>
+  </div>
+  </div>
+  <div class="chart" style="margin-left: 10px; margin-right: 10px">
   <canvas style="border:1px solid" class="chart" id="chart"></canvas>
 </div>
