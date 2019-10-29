@@ -107,6 +107,7 @@ export class HomeComponent implements OnInit {
         return;
       }
       this.simTime = this.homeService.parseDateTime(data);
+      console.log(this.simTime);
       this.updateRealTime();
     };
     eel.expose(UpdateTrain, 'update_train_js');
@@ -261,6 +262,12 @@ export class HomeComponent implements OnInit {
     }
     this.updateInfo(this.chart);
     this.chart.update();
+  }
+
+  centerToSimTime() {
+    const size = this.chart.options.scales.xAxes[0].time.max - this.chart.options.scales.xAxes[0].time.min;
+    this.chart.options.scales.xAxes[0].time.min = this.simTime.getTime() - size / 2;
+    this.chart.options.scales.xAxes[0].time.max = this.simTime.getTime() + size / 2;
   }
 
   private onPanZoom = () => {
