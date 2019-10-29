@@ -111,6 +111,7 @@ export class HomeComponent implements OnInit {
         return;
       }
       this.simTime = this.homeService.parseDateTime(data);
+      console.log(this.simTime);
       this.updateRealTime();
     };
     eel.expose(UpdateTrain, 'update_train_js');
@@ -296,6 +297,12 @@ export class HomeComponent implements OnInit {
     this.chart.update();
   }
 
+  centerToSimTime() {
+    const size = this.chart.options.scales.xAxes[0].time.max - this.chart.options.scales.xAxes[0].time.min;
+    this.chart.options.scales.xAxes[0].time.min = this.simTime.getTime() - size / 2;
+    this.chart.options.scales.xAxes[0].time.max = this.simTime.getTime() + size / 2;
+  }
+
   private onPanZoom = () => {
     this.onUpdate = true;
   };
@@ -308,17 +315,6 @@ export class HomeComponent implements OnInit {
   private updateInfo = (chart: any) => {
     const min = this.chart.options.scales.xAxes[0].time.min;
     const max = this.chart.options.scales.xAxes[0].time.max;
-    if (max - min > 7200000) {
-      if (chart.options.scales.xAxes[0].time.unitStepSize !== 2) {
-        this.chart.options.scales.xAxes[0].time.unitStepSize = 2;
-        this.chart.options.scales.xAxes[0].time.unit = 'hour';
-      }
-    } else {
-      if (chart.options.scales.xAxes[0].time.unitStepSize !== 10) {
-        this.chart.options.scales.xAxes[0].time.unitStepSize = 10;
-        this.chart.options.scales.xAxes[0].time.unit = 'minute';
-      }
-    }
     const _datasets: any = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction);
     _datasets.forEach((dataset: any, index: number) => {
       _datasets[index].data = _datasets[index].data.filter((data: any) => data.coord);
@@ -581,5 +577,10 @@ export class HomeComponent implements OnInit {
       });
       this.colorIndex += 1;
     });
+  }
+
+  changeRange(unit: string, offset: number) {
+    this.chart.options.scales.xAxes[0].time.unitStepSize = offset;
+    this.chart.options.scales.xAxes[0].time.unit = unit;
   }
 }
