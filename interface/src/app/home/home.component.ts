@@ -7,6 +7,8 @@ import * as Chart from 'chart.js';
 //@ts-ignore
 const simplify = require('simplify-js');
 
+import MANCHETTES from './manchettes.json';
+
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
   beforeDraw: function(chart: any) {
@@ -51,6 +53,8 @@ const colorList = [
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
+  manchettes = MANCHETTES;
+  manchettesStations: any = null;
   isLoading = true;
   linesName: string[] = [];
   private worker = [
@@ -118,6 +122,35 @@ export class HomeComponent implements OnInit {
     this.initLines();
     this.initChart();
     this.isLoading = false;
+  }
+
+  stationIsInManchette(stationManchette: any, station: any) {
+    for (let i = 0; i < stationManchette.length; i++) {
+      if (stationManchette[i].name === station) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  selectManchette(manchette: any) {
+    let stations = this.stations[0].stations;
+    const stationsToRemove = [];
+    console.log(this.chart.config.data.datasets);
+
+    for (let i = 0; i < stations.length; i++) {
+      if (!this.stationIsInManchette(manchette.stop_points, stations[i])) {
+        console.log("remove -> " + stations[i]);
+        stationsToRemove.push(this.stations[0].stations.indexOf(stations[i]));
+      }
+    }
+    for (let i = stationsToRemove.length - 1; i > 0; i--) {
+      this.stations[0].stations.splice(stationsToRemove[i], 1);
+    }
+    console.log(this.stations);
+    if (this.chart) {
+      this.chart.update();
+    }
   }
 
   selectLine(lineName: string, checked: boolean) {

@@ -10,11 +10,10 @@
     {{ lineName }}
   </mat-checkbox>
 </div>
-<mat-form-field>
+<mat-form-field style="margin-left: 30px;">
   <mat-label>Manchette</mat-label>
   <mat-select>
-    <mat-option value="Manchette 1">Manchette 1</mat-option>
-    <mat-option value="Manchette 2">Manchette 2</mat-option>
+    <mat-option *ngFor="let manchette of manchettes" (click)="selectManchette(manchette)" value="{{ manchette.name }}">{{ manchette.name }}</mat-option>
   </mat-select>
 </mat-form-field>
 <div class="chart" style="margin-left: 10px; margin-right: 10px">
