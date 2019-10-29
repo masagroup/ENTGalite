@@ -22,7 +22,7 @@
             "tsConfig": "src/tsconfig.app.json",
             "polyfills": "src/polyfills.ts",
             "assets": ["src/favicon.ico", "src/apple-touch-icon.png", "src/robots.txt", "src/assets"],
-            "styles": ["src/main.scss"],
+            "styles": ["src/main.scss", "node_modules/bootstrap/dist/css/bootstrap.min.css"],
             "scripts": [],
             "webWorkerTsConfig": "tsconfig.worker.json"
           },

@@ -23,10 +23,16 @@
       <button type="button" class="btn btn-secondary" (click)="changeRange('hour', 1)">1h</button>
       <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 30)">30min</button>
       <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 15)">15min</button>
+      <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 10)">10min</button>
       <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 5)">5min</button>
     </div>
   </div>
+  <div class="ml-3 mt-3">
+    <div type="button" class="btn btn-secondary">
+      Recentrez
+    </div>
   </div>
-  <div class="chart" style="margin-left: 10px; margin-right: 10px">
+</div>
+<div class="chart" style="margin-left: 10px; margin-right: 10px">
   <canvas style="border:1px solid" class="chart" id="chart"></canvas>
 </div>
