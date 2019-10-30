@@ -77,6 +77,8 @@ export class HomeComponent implements OnInit {
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' })
   ];
+  lineSelectedSave: boolean[] = [];
+  display: boolean = false;
   readonly maxWorker = this.worker.length - 1;
   private chart: any;
   private actualWorker = 0;
@@ -220,6 +222,7 @@ export class HomeComponent implements OnInit {
   }
 
   selectLine(lineName: string, checked: boolean) {
+    console.log(checked);
     const _hiddenDataSets = this.hiddenDataSets;
     if (checked) {
       this.selectedLine = this.data.lines.find(line => line.line_name === lineName);
@@ -649,5 +652,20 @@ export class HomeComponent implements OnInit {
   changeRange(unit: string, offset: number) {
     this.chart.options.scales.xAxes[0].time.unitStepSize = offset;
     this.chart.options.scales.xAxes[0].time.unit = unit;
+  }
+  test(param: any) {
+    let lineName: string[] = [];
+    let selected: boolean[] = [];
+
+    for (let i = 0; i < param.length; i++) {
+      if ((i < this.lineSelectedSave.length && param[i].selected !== this.lineSelectedSave[i]) || (this.lineSelectedSave.length === 0 && param[i].selected)) {
+        this.selectLine(param[i].value, param[i].selected);
+        this.selectLine(param[i].value, !param[i].selected);
+        this.selectLine(param[i].value, param[i].selected);
+      }
+      selected.push(param[i].selected);
+    }
+    this.lineSelectedSave = [];
+    this.lineSelectedSave = selected;
   }
 }
