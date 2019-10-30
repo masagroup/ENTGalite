@@ -81,7 +81,8 @@ export class HomeComponent implements OnInit {
   private chart: any;
   private actualWorker = 0;
   private hiddenDataSets: Chart.ChartDataSets[] = [];
-  private stations: { line: string; stations: string[] }[] = [];
+  private stations: string[] = [];
+  private displayedStations: { line: string; stations: string[] }[] = [];
   private simTime: Date;
   private colorIndex = 0;
   private runInfos: RunInfo[] = [];
@@ -90,7 +91,6 @@ export class HomeComponent implements OnInit {
   private maxTime: number;
   private onUpdate: boolean = false;
   private data: MarchesByLines;
-
   constructor(private homeService: HomeService) {}
 
   async ngOnInit() {
@@ -111,7 +111,6 @@ export class HomeComponent implements OnInit {
         return;
       }
       this.simTime = this.homeService.parseDateTime(data);
-      console.log(this.simTime);
       this.updateRealTime();
     };
     eel.expose(UpdateTrain, 'update_train_js');
@@ -134,21 +133,31 @@ export class HomeComponent implements OnInit {
     return false;
   }
 
-  selectManchette(manchette: any) {
-    let stations = this.stations[0].stations;
-    const stationsToRemove = [];
-    console.log(this.chart.config.data.datasets);
+  removeManchette() {
+    console.log(this.displayedStations);
+    console.log(this.stations);
+    this.displayedStations[0].stations = this.stations.slice(0);
+    if (this.chart) {
+      this.chart.update();
+    }
+  }
 
+  selectManchette(manchette: any) {
+    let stations = this.stations.slice(0);
+    const stationsToRemove = [];
+
+    this.displayedStations[0].stations = this.stations.slice(0);
+    console.log(this.chart);
+    console.log(this.runInfos);
+    console.log(this.data);
     for (let i = 0; i < stations.length; i++) {
       if (!this.stationIsInManchette(manchette.stop_points, stations[i])) {
-        console.log("remove -> " + stations[i]);
-        stationsToRemove.push(this.stations[0].stations.indexOf(stations[i]));
+        stationsToRemove.push(this.displayedStations[0].stations.indexOf(stations[i]));
       }
     }
     for (let i = stationsToRemove.length - 1; i > 0; i--) {
-      this.stations[0].stations.splice(stationsToRemove[i], 1);
+      this.displayedStations[0].stations.splice(stationsToRemove[i], 1);
     }
-    console.log(this.stations);
     if (this.chart) {
       this.chart.update();
     }
@@ -157,6 +166,7 @@ export class HomeComponent implements OnInit {
   selectLine(lineName: string, checked: boolean) {
     const _hiddenDataSets = this.hiddenDataSets;
     if (checked) {
+      console.log(_hiddenDataSets);
       _hiddenDataSets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
           this.chart.config.data.datasets.push(dataset);
@@ -166,13 +176,14 @@ export class HomeComponent implements OnInit {
       const runInfo = this.runInfos[indexRunInfo];
       runInfo.hidden = false;
       this.maxStation = runInfo.maxStation > this.maxStation ? runInfo.maxStation : this.maxStation;
-      this.stations.push({ line: runInfo.lineName, stations: runInfo.stations });
+      this.displayedStations.push({ line: runInfo.lineName, stations: runInfo.stations });
+      this.stations = this.displayedStations[0].stations.slice(0);
     } else {
       const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
       const runInfo = this.runInfos[indexRunInfo];
       runInfo.hidden = true;
       this.maxStation = Math.max(...this.runInfos.filter(x => !x.hidden).map(x => x.maxStation));
-      this.stations = this.stations.filter(x => x.line !== lineName);
+      this.displayedStations = this.displayedStations.filter(x => x.line !== lineName);
       this.chart.config.data.datasets = this.chart.config.data.datasets.filter(
         (dataset: any) => dataset.selectedLine !== lineName
       );
@@ -185,7 +196,7 @@ export class HomeComponent implements OnInit {
   private async updateTrain(runName: string, coordTrain: Point) {
     const _datasets: any = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
-    if (index === -1 || this.stations.findIndex(station => station.line === _datasets[index].selectedLine) === -1) {
+    if (index === -1 || this.displayedStations.findIndex(station => station.line === _datasets[index].selectedLine) === -1) {
       return;
     }
     const walk = <any>_datasets[index];
@@ -209,7 +220,7 @@ export class HomeComponent implements OnInit {
           lastSimplify: 0
         };
         _datasets.push(newDataset);
-        if (this.stations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
+        if (this.displayedStations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
           this.chart.config.data.datasets.push(newDataset);
         }
       } else {
@@ -428,7 +439,7 @@ export class HomeComponent implements OnInit {
                 let stationsLabel: string;
                 let firstStation: string;
                 let lastStation: string;
-                this.stations.forEach(station => {
+                this.displayedStations.forEach(station => {
                   if (station.stations[value]) {
                     if (!stationsLabel) {
                       stationsLabel = station.stations[value];
