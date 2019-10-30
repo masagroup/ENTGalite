@@ -6,7 +6,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialModule } from './material.module';
 import { AlertModule } from 'ngx-bootstrap';
-
 import 'chartjs-plugin-zoom';
 import 'chartjs-plugin-annotation';
 import 'chartjs-plugin-datalabels';
