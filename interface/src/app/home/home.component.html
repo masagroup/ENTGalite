@@ -1,7 +1,7 @@
 
 <div class="row ml-3">
   <div class="form-group">
-    <label for="exampleFormControlSelect2">Sélection des lignes</label>
+    <label for="exampleFormControlSelect2">Sélection des lignes (maintenir ctrl pour en sélectionner plusieurs)</label>
     <select multiple class="form-control" id="exampleFormControlSelect2" (change)="test($event.target)">
       <option *ngFor="let lineName of linesName">{{ lineName }}</option>
     </select>
