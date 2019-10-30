@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { Context } from 'chartjs-plugin-datalabels';
 
-import { HomeService, MarchesByLines, Line, Point, RunInfo } from './home.service';
+import { HomeService, MarchesByLines, Line, Point, RunInfo, Station } from './home.service';
 import * as Chart from 'chart.js';
 //@ts-ignore
 const simplify = require('simplify-js');
@@ -87,10 +87,13 @@ export class HomeComponent implements OnInit {
   private colorIndex = 0;
   private runInfos: RunInfo[] = [];
   private maxStation: number;
+  private tmpMaxStation: number;
   private minTime: number;
   private maxTime: number;
   private onUpdate: boolean = false;
   private data: MarchesByLines;
+  private selectedLine: Line;
+
   constructor(private homeService: HomeService) {}
 
   async ngOnInit() {
@@ -133,13 +136,66 @@ export class HomeComponent implements OnInit {
     return false;
   }
 
+  datasetMatchGeoPoint(data: any, lat: string[], lon: string[]) {
+    if (!data.coord) {
+      return false;
+    }
+    for (let i = 0; i < lat.length; i++) {
+      if (data.coord.lat.toString() === lat[i] && data.coord.lon.toString() === lon[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  removePoints(latToRemove: string[], lonToRemove: string[]) {
+    this.chart.config.data.datasets.forEach((dataset: any) => {
+      const indexPointsToRemove: number[] = [];
+      for (let i = 0; i < dataset.data.length; i++) {
+        if (this.datasetMatchGeoPoint(dataset.data[i], latToRemove, lonToRemove) === true) {
+          indexPointsToRemove.push(i);
+        }
+      }
+      for (let i = indexPointsToRemove.length - 1; i >= 0; i--) {
+        if (!dataset.realTime) {
+          dataset.data.splice(indexPointsToRemove[i], 1);
+        } else {
+          dataset.data[1].y = 16;
+        }
+      }
+    });
+  }
+
+  isRemovedStation(station: string, displayedStations: string[]) {
+    for (let i = 0; i < displayedStations.length; i++) {
+      if (displayedStations[i] === station) {
+          return false;
+      }
+    }
+    return true;
+  }
+  
+  removeUnusedData() {
+    const latToRemove: string[] = [];
+    const lonToRemove: string[] = [];
+    const allStations = this.selectedLine.stations;
+    const manchetteStations = this.displayedStations[0].stations;
+
+    for (let i = 0; i < allStations.length; i++) {
+      if (this.isRemovedStation(allStations[i].name, manchetteStations)) {
+        latToRemove.push(this.selectedLine.stations[i].coord.lat);
+        lonToRemove.push(this.selectedLine.stations[i].coord.lon);
+      }
+    }
+    this.removePoints(latToRemove, lonToRemove);
+  }
+  
   removeManchette() {
-    console.log(this.displayedStations);
-    console.log(this.stations);
     this.displayedStations[0].stations = this.stations.slice(0);
     if (this.chart) {
       this.chart.update();
     }
+    this.maxStation = this.tmpMaxStation;
   }
 
   selectManchette(manchette: any) {
@@ -147,17 +203,17 @@ export class HomeComponent implements OnInit {
     const stationsToRemove = [];
 
     this.displayedStations[0].stations = this.stations.slice(0);
-    console.log(this.chart);
-    console.log(this.runInfos);
-    console.log(this.data);
     for (let i = 0; i < stations.length; i++) {
       if (!this.stationIsInManchette(manchette.stop_points, stations[i])) {
         stationsToRemove.push(this.displayedStations[0].stations.indexOf(stations[i]));
       }
     }
-    for (let i = stationsToRemove.length - 1; i > 0; i--) {
+    for (let i = stationsToRemove.length - 1; i >= 0; i--) {
       this.displayedStations[0].stations.splice(stationsToRemove[i], 1);
     }
+    this.removeUnusedData();
+    this.tmpMaxStation = this.maxStation;
+    this.maxStation = this.displayedStations[0].stations.length;
     if (this.chart) {
       this.chart.update();
     }
@@ -166,7 +222,7 @@ export class HomeComponent implements OnInit {
   selectLine(lineName: string, checked: boolean) {
     const _hiddenDataSets = this.hiddenDataSets;
     if (checked) {
-      console.log(_hiddenDataSets);
+      this.selectedLine = this.data.lines.find(line => line.line_name === lineName);
       _hiddenDataSets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
           this.chart.config.data.datasets.push(dataset);
