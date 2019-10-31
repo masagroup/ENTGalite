@@ -95,6 +95,8 @@ export class HomeComponent implements OnInit {
   private onUpdate: boolean = false;
   private data: MarchesByLines;
   private selectedLine: Line;
+  private datasetToDisplay: Chart.ChartDataSets[] = [];
+  private dataSaves: any[] = [];
 
   constructor(private homeService: HomeService) {}
 
@@ -138,6 +140,32 @@ export class HomeComponent implements OnInit {
     return false;
   }
 
+  getYOffset(data: any[]) {
+    let lowestPoint = data[0].y;
+
+    for (let i = 0; i < data.length; i++) {
+      if (Math.abs(data[i].y) < lowestPoint) {
+        lowestPoint = data[i].y;
+      }
+    }
+    return lowestPoint;
+  }
+
+  changePointsOffsetY(data: any[], offset: number) {
+    for (let i = 0; i < data.length; i++) {
+      data[i].y += offset * -1;
+    }
+  }
+
+  fixPointsOffset(datasets: any[]) {
+    for (let i = 0; i < datasets.length; i++) {
+      let offset = this.getYOffset(datasets[i].data);
+      if (offset !== 0) {
+        this.changePointsOffsetY(datasets[i].data, offset);
+      }
+    }
+  }
+
   datasetMatchGeoPoint(data: any, lat: string[], lon: string[]) {
     if (!data.coord) {
       return false;
@@ -151,8 +179,9 @@ export class HomeComponent implements OnInit {
   }
 
   removePoints(latToRemove: string[], lonToRemove: string[]) {
-    this.chart.config.data.datasets.forEach((dataset: any) => {
+    this.datasetToDisplay.forEach((dataset: any) => {
       const indexPointsToRemove: number[] = [];
+      this.dataSaves.push(JSON.parse(JSON.stringify(dataset.data)));
       for (let i = 0; i < dataset.data.length; i++) {
         if (this.datasetMatchGeoPoint(dataset.data[i], latToRemove, lonToRemove) === true) {
           indexPointsToRemove.push(i);
@@ -161,8 +190,6 @@ export class HomeComponent implements OnInit {
       for (let i = indexPointsToRemove.length - 1; i >= 0; i--) {
         if (!dataset.realTime) {
           dataset.data.splice(indexPointsToRemove[i], 1);
-        } else {
-          dataset.data[1].y = 16;
         }
       }
     });
@@ -182,7 +209,6 @@ export class HomeComponent implements OnInit {
     const lonToRemove: string[] = [];
     const allStations = this.selectedLine.stations;
     const manchetteStations = this.displayedStations[0].stations;
-
     for (let i = 0; i < allStations.length; i++) {
       if (this.isRemovedStation(allStations[i].name, manchetteStations)) {
         latToRemove.push(this.selectedLine.stations[i].coord.lat);
@@ -194,10 +220,14 @@ export class HomeComponent implements OnInit {
   
   removeManchette() {
     this.displayedStations[0].stations = this.stations.slice(0);
+    const datasets = this.chart.config.data.datasets;
+    for (let i = 0; i < datasets.length; i++) {
+      datasets[i].data = this.dataSaves[i];
+    }
+    this.maxStation = this.tmpMaxStation;
     if (this.chart) {
       this.chart.update();
     }
-    this.maxStation = this.tmpMaxStation;
   }
 
   selectManchette(manchette: any) {
@@ -205,6 +235,9 @@ export class HomeComponent implements OnInit {
     const stationsToRemove = [];
 
     this.displayedStations[0].stations = this.stations.slice(0);
+    this.datasetToDisplay = this.hiddenDataSets.filter(
+      (dataset: any) => dataset.selectedLine === this.selectedLine.line_name
+    );
     for (let i = 0; i < stations.length; i++) {
       if (!this.stationIsInManchette(manchette.stop_points, stations[i])) {
         stationsToRemove.push(this.displayedStations[0].stations.indexOf(stations[i]));
@@ -213,16 +246,17 @@ export class HomeComponent implements OnInit {
     for (let i = stationsToRemove.length - 1; i >= 0; i--) {
       this.displayedStations[0].stations.splice(stationsToRemove[i], 1);
     }
-    this.removeUnusedData();
     this.tmpMaxStation = this.maxStation;
     this.maxStation = this.displayedStations[0].stations.length;
+    this.removeUnusedData();
+    this.fixPointsOffset(this.datasetToDisplay);
+    this.chart.config.data.datasets = this.datasetToDisplay;
     if (this.chart) {
       this.chart.update();
     }
   }
 
   selectLine(lineName: string, checked: boolean) {
-    console.log(checked);
     const _hiddenDataSets = this.hiddenDataSets;
     if (checked) {
       this.selectedLine = this.data.lines.find(line => line.line_name === lineName);
@@ -406,7 +440,7 @@ export class HomeComponent implements OnInit {
             min,
             this.maxStation
           );
-          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
+          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y});
           break;
         }
       }
