@@ -8,7 +8,6 @@ import * as Chart from 'chart.js';
 const simplify = require('simplify-js');
 
 import MANCHETTES from './manchettes.json';
-import { createOfflineCompileUrlResolver } from '@angular/compiler';
 
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
@@ -162,7 +161,8 @@ export class HomeComponent implements OnInit {
 
   fixPointsOffset(datasets: any[]) {
     for (let i = 0; i < datasets.length; i++) {
-      let offset = this.getYOffset(datasets[i].data);
+      const offset = this.getYOffset(datasets[i].data);
+      console.log(offset);
       if (offset !== 0) {
         this.changePointsOffsetY(datasets[i].data, offset);
       }
@@ -221,23 +221,29 @@ export class HomeComponent implements OnInit {
     this.removePoints(latToRemove, lonToRemove);
   }
   
-  removeManchette() {
-    this.displayedStations[0].stations = this.stations.slice(0);
+  removeManchette(display: boolean) {
     const datasets = this.chart.config.data.datasets;
+
+    this.displayedStations[0].stations = this.stations.slice(0);
     for (let i = 0; i < datasets.length; i++) {
-      datasets[i].data = this.dataSaves[i];
+      if (datasets[i].realTime) {
+        continue;
+      }
+      datasets[i].data = JSON.parse(JSON.stringify(this.dataSaves[i]));
     }
     this.maxStation = this.tmpMaxStation;
-    if (this.chart) {
+    if (this.chart && display) {
       this.chart.update();
     }
   }
 
   selectManchette(manchette: any) {
+    this.updateInfo(this.chart.chart);
+    if (this.dataSaves && this.dataSaves.length > 0) {
+      this.removeManchette(false);
+    }
     let stations = this.stations.slice(0);
     const stationsToRemove = [];
-
-    this.displayedStations[0].stations = this.stations.slice(0);
     this.datasetToDisplay = this.hiddenDataSets.filter(
       (dataset: any) => dataset.selectedLine === this.selectedLine.line_name
     );

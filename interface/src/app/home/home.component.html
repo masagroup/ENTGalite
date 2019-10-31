@@ -10,7 +10,7 @@
       <mat-form-field>
       <mat-label>Manchette</mat-label>
       <mat-select>
-        <mat-option (click)="removeManchette()" value="Aucune manchette">Aucune manchette</mat-option>
+        <mat-option (click)="removeManchette(true)" value="Aucune manchette">Aucune manchette</mat-option>
         <mat-option *ngFor="let manchette of manchettes" (click)="selectManchette(manchette)" value="{{ manchette.name }}">{{ manchette.name }}</mat-option>
       </mat-select>
     </mat-form-field>
