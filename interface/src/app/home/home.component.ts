@@ -8,6 +8,7 @@ import * as Chart from 'chart.js';
 const simplify = require('simplify-js');
 
 import MANCHETTES from './manchettes.json';
+import { createOfflineCompileUrlResolver } from '@angular/compiler';
 
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
@@ -79,6 +80,8 @@ export class HomeComponent implements OnInit {
   ];
   lineSelectedSave: boolean[] = [];
   display: boolean = false;
+  saveUpdatedTrains: string[] = [];
+  saveTimeUpdateTrains: number[] = [];
   readonly maxWorker = this.worker.length - 1;
   private chart: any;
   private actualWorker = 0;
@@ -222,7 +225,6 @@ export class HomeComponent implements OnInit {
   }
 
   selectLine(lineName: string, checked: boolean) {
-    console.log(checked);
     const _hiddenDataSets = this.hiddenDataSets;
     if (checked) {
       this.selectedLine = this.data.lines.find(line => line.line_name === lineName);
@@ -258,8 +260,37 @@ export class HomeComponent implements OnInit {
     if (index === -1 || this.displayedStations.findIndex(station => station.line === _datasets[index].selectedLine) === -1) {
       return;
     }
-    const walk = <any>_datasets[index];
 
+    const walk = <any>_datasets[index];
+    console.log(this.chart.config.data.datasets);
+    if (!this.saveUpdatedTrains.includes(runName)) {
+      this.saveUpdatedTrains.push(runName);
+      this.saveTimeUpdateTrains.push(1);
+    } else {
+      this.saveTimeUpdateTrains[this.saveUpdatedTrains.indexOf(runName)] += 1;
+      if (this.saveTimeUpdateTrains[this.saveUpdatedTrains.indexOf(runName)] === 2) {
+        let find: boolean = false;
+        for (let trains of this.saveTimeUpdateTrains) {
+          if (trains === 0) {
+            console.log(this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]);
+            for (let i = this.chart.config.data.datasets.length; i > 0; i--) {
+              if (this.chart.config.data.datasets[i] && this.chart.config.data.datasets[i].label === this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]) {
+                this.chart.config.data.datasets[i].data.push({x: this.simTime, y: this.chart.config.data.datasets[i].data[this.chart.config.data.datasets[i].data.length - 1].y});
+                break;
+              }
+            }
+            find = true;
+            this.saveTimeUpdateTrains[this.saveTimeUpdateTrains.indexOf(trains)] = 1;
+          }
+        }
+        if (find === false) {
+          for (let i = 0; i < this.saveTimeUpdateTrains.length; i++) {
+            this.saveTimeUpdateTrains[i] = 0;
+          }
+        }
+      }
+    }
+    console.log(this.saveTimeUpdateTrains);
     this.worker[this.actualWorker].onmessage = ({ data }) => {
       const runName = data.runName;
       const y = data.y;
@@ -304,7 +335,6 @@ export class HomeComponent implements OnInit {
       }
     };
     const clonedWalk = JSON.parse(JSON.stringify(walk.data));
-
     const clonedCoordTrain = JSON.parse(JSON.stringify(coordTrain));
     this.worker[this.actualWorker].postMessage({ walk: clonedWalk, coordTrain: clonedCoordTrain, runName });
     this.actualWorker += 1;
