@@ -57,6 +57,7 @@ export class HomeComponent implements OnInit {
   manchettesStations: any = null;
   isLoading = true;
   linesName: string[] = [];
+  continueUpdateStopTrains: boolean = false;
   private worker = [
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
@@ -77,11 +78,11 @@ export class HomeComponent implements OnInit {
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' })
   ];
-  lineSelectedSave: boolean[] = [];
-  display: boolean = false;
-  saveUpdatedTrains: string[] = [];
-  saveTimeUpdateTrains: number[] = [];
   readonly maxWorker = this.worker.length - 1;
+  private lineSelectedSave: boolean[] = [];
+  private display: boolean = false;
+  private saveUpdatedTrains: string[] = [];
+  private saveTimeUpdateTrains: number[] = [];
   private chart: any;
   private actualWorker = 0;
   private hiddenDataSets: Chart.ChartDataSets[] = [];
@@ -201,12 +202,12 @@ export class HomeComponent implements OnInit {
   isRemovedStation(station: string, displayedStations: string[]) {
     for (let i = 0; i < displayedStations.length; i++) {
       if (displayedStations[i] === station) {
-          return false;
+        return false;
       }
     }
     return true;
   }
-  
+
   removeUnusedData() {
     const latToRemove: string[] = [];
     const lonToRemove: string[] = [];
@@ -220,7 +221,7 @@ export class HomeComponent implements OnInit {
     }
     this.removePoints(latToRemove, lonToRemove);
   }
-  
+
   removeManchette(display: boolean) {
     const datasets = this.chart.config.data.datasets;
 
@@ -298,7 +299,10 @@ export class HomeComponent implements OnInit {
   private async updateTrain(runName: string, coordTrain: Point) {
     const _datasets: any = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
-    if (index === -1 || this.displayedStations.findIndex(station => station.line === _datasets[index].selectedLine) === -1) {
+    if (
+      index === -1 ||
+      this.displayedStations.findIndex(station => station.line === _datasets[index].selectedLine) === -1
+    ) {
       return;
     }
 
@@ -315,8 +319,17 @@ export class HomeComponent implements OnInit {
           if (trains === 0) {
             console.log(this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]);
             for (let i = this.chart.config.data.datasets.length; i > 0; i--) {
-              if (this.chart.config.data.datasets[i] && this.chart.config.data.datasets[i].label === this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]) {
-                this.chart.config.data.datasets[i].data.push({x: this.simTime, y: this.chart.config.data.datasets[i].data[this.chart.config.data.datasets[i].data.length - 1].y});
+              if (
+                this.chart.config.data.datasets[i] &&
+                this.chart.config.data.datasets[i].label ===
+                  this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]
+              ) {
+                if (this.continueUpdateStopTrains) {
+                  this.chart.config.data.datasets[i].data.push({
+                    x: this.simTime,
+                    y: this.chart.config.data.datasets[i].data[this.chart.config.data.datasets[i].data.length - 1].y
+                  });
+                }
                 break;
               }
             }
@@ -444,6 +457,10 @@ export class HomeComponent implements OnInit {
     this.chart.options.scales.xAxes[0].time.max = this.simTime.getTime() + size / 2;
   }
 
+  changeOption(value: boolean) {
+    this.continueUpdateStopTrains = value;
+  }
+
   private onPanZoom = () => {
     this.onUpdate = true;
   };
@@ -477,7 +494,7 @@ export class HomeComponent implements OnInit {
             min,
             this.maxStation
           );
-          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y});
+          _datasets[index].data.splice(i, 0, { x: intersect.x, y: intersect.y });
           break;
         }
       }
@@ -729,7 +746,10 @@ export class HomeComponent implements OnInit {
     let selected: boolean[] = [];
 
     for (let i = 0; i < param.length; i++) {
-      if ((i < this.lineSelectedSave.length && param[i].selected !== this.lineSelectedSave[i]) || (this.lineSelectedSave.length === 0 && param[i].selected)) {
+      if (
+        (i < this.lineSelectedSave.length && param[i].selected !== this.lineSelectedSave[i]) ||
+        (this.lineSelectedSave.length === 0 && param[i].selected)
+      ) {
         this.selectLine(param[i].value, param[i].selected);
         this.selectLine(param[i].value, !param[i].selected);
         this.selectLine(param[i].value, param[i].selected);
