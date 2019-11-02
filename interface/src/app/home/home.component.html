@@ -1,4 +1,3 @@
-
 <div class="row ml-3">
   <div class="form-group">
     <label for="exampleFormControlSelect2">Sélection des lignes (maintenir ctrl pour en sélectionner plusieurs)</label>
@@ -7,11 +6,21 @@
     </select>
   </div>
   <div class="ml-3 mt-5">
-      <mat-form-field>
+    <mat-form-field>
       <mat-label>Manchette</mat-label>
       <mat-select>
+<<<<<<< HEAD
         <mat-option (click)="resetManchettes()" value="Aucune manchette">Aucune manchette</mat-option>
         <mat-option *ngFor="let manchette of manchettes" (click)="selectManchette(manchette)" value="{{ manchette.name }}">{{ manchette.name }}</mat-option>
+=======
+        <mat-option (click)="removeManchette(true)" value="Aucune manchette">Aucune manchette</mat-option>
+        <mat-option
+          *ngFor="let manchette of manchettes"
+          (click)="selectManchette(manchette)"
+          value="{{ manchette.name }}"
+          >{{ manchette.name }}</mat-option
+        >
+>>>>>>> cf29e8249b076222d253ffdbbb395d5655221da6
       </mat-select>
     </mat-form-field>
   </div>
@@ -29,6 +38,21 @@
       Recentrez
     </div>
   </div>
-<div class="chart" style="margin-left: 10px; margin-right: 10px">
-  <canvas style="border:1px solid" class="chart" id="chart"></canvas>
+  <div *ngIf="!continueUpdateStopTrains">
+    <div class="ml-3 mt-5">
+      <div type="button" class="btn btn-secondary" (click)="changeOption(true)">
+        Activer la ligne continue
+      </div>
+    </div>
+  </div>
+  <div *ngIf="continueUpdateStopTrains">
+    <div class="ml-3 mt-5">
+      <div type="button" class="btn btn-secondary" (click)="changeOption(false)">
+        Désactiver la ligne continue
+      </div>
+    </div>
+  </div>
+  <div class="chart" style="margin-left: 10px; margin-right: 10px">
+    <canvas style="border:1px solid" class="chart" id="chart"></canvas>
+  </div>
 </div>
