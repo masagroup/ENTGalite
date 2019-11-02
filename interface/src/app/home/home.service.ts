@@ -35,6 +35,11 @@ export interface Point {
   y: number;
 }
 
+export interface GeoPoint {
+  lat: number | string;
+  lon: number | string;
+}
+
 export interface RunInfo {
   lineName: string;
   marcheNames: string[];
