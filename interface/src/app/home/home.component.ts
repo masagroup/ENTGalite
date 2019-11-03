@@ -203,7 +203,7 @@ export class HomeComponent implements OnInit {
     });
     datasets.forEach((dataset: any) => {
       for (let i = 0; i < dataset.data.length; i++) {
-        if (dataset.data[i].realTime || !dataset.data[i].coord) {
+        if (dataset.data[i].realTime === true || !dataset.data[i].coord) {
           continue;
         } else if (this.checkIfGeoPointsMatch(dataset.data[i].coord, geoPointsToRemove)) {
           dataset.data.splice(i, 1);
@@ -242,12 +242,15 @@ export class HomeComponent implements OnInit {
   }
 
   resetManchettes() {
-    if (this.savedStations.length > 0) {
+    if (this.savedStations && this.savedStations.length > 0) {
       this.stations[0].stations = this.savedStations; 
       for (let i = 0; i < this.chart.config.data.datasets.length; i++) {
-        this.chart.config.data.datasets[i].data = JSON.parse(JSON.stringify(this.dataSaves[i]));
+        if (!this.chart.config.data.datasets[i].realTime) {
+          this.chart.config.data.datasets[i].data = JSON.parse(JSON.stringify(this.dataSaves[i]));
+        }
       }
       this.maxStation = this.stations[0].stations.length;
+      this.clearRealTime();
       this.chart.update();
     }
   }
@@ -474,6 +477,7 @@ export class HomeComponent implements OnInit {
     _datasets.forEach((dataset: any, index: number) => {
       _datasets[index].data = _datasets[index].data.filter((data: any) => data.coord);
       if (
+        (dataset.data.length === 0) ||
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
       ) {
