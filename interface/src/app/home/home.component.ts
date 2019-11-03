@@ -57,6 +57,7 @@ export class HomeComponent implements OnInit {
   isLoading = true;
   linesName: string[] = [];
   continueUpdateStopTrains: boolean = false;
+  manchetteStatus: string = null;
   private worker = [
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
@@ -130,6 +131,16 @@ export class HomeComponent implements OnInit {
     this.initLines();
     this.initChart();
     this.isLoading = false;
+  }
+
+  clearRealTime() {
+    const datasets = this.chart.config.data.datasets;
+
+    for (let i = 0; i < datasets.length; i++) {
+      if (datasets[i].prediction === false) {
+        datasets[i].data = [];
+      }
+    }
   }
 
   getLowestPoint(y: number[]) {
@@ -219,9 +230,15 @@ export class HomeComponent implements OnInit {
         stationsToRemove.push(i);
       }
     }
+    if (stationsToRemove.length === this.stations[0].stations.length) {
+      this.manchetteStatus = "Aucune station de manchette trouvée sur cette ligne";
+      return 1;
+    }
+    this.manchetteStatus = null;
     for (let i = stationsToRemove.length - 1; i >= 0; i--) {
       this.stations[0].stations.splice(stationsToRemove[i], 1);
     }
+    return 0;
   }
 
   resetManchettes() {
@@ -239,9 +256,12 @@ export class HomeComponent implements OnInit {
     if (this.savedStations) {
       this.resetManchettes();
     }
+    this.clearRealTime();
     this.selectedManchette = manchette;
     this.savedStations = this.stations[0].stations.slice(0);
-    this.removeStationsNotInManchette();
+    if (this.removeStationsNotInManchette() === 1) {
+      return;
+    }
     this.maxStation = this.stations[0].stations.length;
     this.updateInfo(this.chart);
     this.removePointsOutsideManchette();
@@ -295,7 +315,7 @@ export class HomeComponent implements OnInit {
         let find: boolean = false;
         for (let trains of this.saveTimeUpdateTrains) {
           if (trains === 0) {
-            console.log(this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]);
+            //console.log(this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]);
             for (let i = this.chart.config.data.datasets.length; i > 0; i--) {
               if (
                 this.chart.config.data.datasets[i] &&
