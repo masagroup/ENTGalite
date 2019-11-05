@@ -87,6 +87,7 @@ export class HomeComponent implements OnInit {
   private actualWorker = 0;
   private hiddenDataSets: Chart.ChartDataSets[] = [];
   private stations: { line: string; stations: string[] }[] = [];
+  private displayedStations: string[] = [];
   private simTime: Date;
   private colorIndex = 0;
   private runInfos: RunInfo[] = [];
@@ -95,7 +96,7 @@ export class HomeComponent implements OnInit {
   private maxTime: number;
   private onUpdate: boolean = false;
   private data: MarchesByLines;
-  private savedStations: string[];
+  private savedStations: any[];
   private selectedManchette: any = null;
   private dataSaves: any[] = [];
   private selectedLineName: string;
@@ -133,6 +134,30 @@ export class HomeComponent implements OnInit {
     this.isLoading = false;
   }
 
+  getStationWithGeoPoint(lat: Number, lon: Number) {
+    for (let i = 0; i < this.data.lines.length; i++) {
+      for (let j = 0; j < this.data.lines[i].stations.length; j++) {
+        const station = this.data.lines[i].stations[j];
+        if (Number(station.coord.lat) === lat && Number(station.coord.lon) === lon) {
+          return station;
+        }
+      }
+    }
+    return null;
+  }
+
+  getStationGeoPoint(name: string) {
+    for (let i = 0; i < this.data.lines.length; i++) {
+      for (let j = 0; j < this.data.lines[i].stations.length; j++) {
+        const station = this.data.lines[i].stations[j];
+        if (station.name === name) {
+          return {lat: Number(station.coord.lat), lon: Number(station.coord.lon)};
+        }
+      }
+    }
+    return null;
+  }
+
   clearRealTime() {
     const datasets = this.chart.config.data.datasets;
 
@@ -143,41 +168,41 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  getLowestPoint(y: number[]) {
-    let lowestPoint = y[0];
+  getDisplayedStationsCoords() {
+    const coords = [];
 
-    for (let i = 0; i < y.length; i++) {
-      if (y[i] < lowestPoint) {
-        lowestPoint = y[i];
-      }
+    for (let i = 0; i < this.displayedStations.length; i++) {
+      coords.push(this.getStationGeoPoint(this.displayedStations[i]));
     }
-    return lowestPoint;
+    return coords;
   }
 
-  fixManchettePointsOffset() {
-    let datasets = this.chart.config.data.datasets;
+  changePointsY() {
+    const coords = this.getDisplayedStationsCoords();
 
-    this.updateInfo(this.chart);
-    datasets.forEach((dataset: any) => {
-      const offset = this.getLowestPoint(dataset.data.map((data: any) => data.y));
-      if (offset != 0) {
-        dataset.data.forEach((point: any) => point.y -= offset);
-      }
+    this.chart.config.data.datasets.forEach((dataset: any) => {
+      dataset.data.forEach((point: any) => {
+        for (let i = 0; i < this.displayedStations.length; i++) {
+          if (!point.coord || point.realTime) {
+            continue;
+          }
+          if (point.coord.lat === coords[i].lat && point.coord.lon === coords[i].lon) {
+            point.y = i;
+          }
+        }
+      });
     });
   }
 
-  getGeoPointsToRemove() {
-    const line = this.data.lines.find(line => line.line_name === this.selectedLineName);
-    const latToRemove: number[] = [];
-    const lonToRemove: number[] = [];
-    const pointsToRemove: GeoPoint[] = [];
+  getGeoPointsToKeep() {
+    const pointsToKeep: GeoPoint[] = [];
 
-    line.stations.forEach(station => {
-      if (!this.stationIsInManchette(station.name, this.selectedManchette.stop_points)) {
-        pointsToRemove.push({ lat: Number(station.coord.lat), lon: Number(station.coord.lon) });
-      }
-    });
-    return pointsToRemove;
+    for (let i = 0; i < this.displayedStations.length; i++) {
+      const coord = 
+      pointsToKeep.push(this.getStationGeoPoint(this.displayedStations[i]));
+    }
+    console.log(pointsToKeep);
+    return pointsToKeep;
   }
 
   checkIfGeoPointsMatch(coord: GeoPoint, geoPoints: GeoPoint[]) {
@@ -195,7 +220,7 @@ export class HomeComponent implements OnInit {
   removePointsOutsideManchette() {
     console.log(this.data);
     console.log(this.chart);
-    const geoPointsToRemove = this.getGeoPointsToRemove();
+    const geoPointsToKeep = this.getGeoPointsToKeep();
     let datasets = this.chart.config.data.datasets;
 
     this.chart.config.data.datasets.forEach((dataset: any) => {
@@ -203,9 +228,9 @@ export class HomeComponent implements OnInit {
     });
     datasets.forEach((dataset: any) => {
       for (let i = 0; i < dataset.data.length; i++) {
-        if (dataset.data[i].realTime === true || !dataset.data[i].coord) {
+        if (dataset.data[i].realTime || !dataset.data[i].coord) {
           continue;
-        } else if (this.checkIfGeoPointsMatch(dataset.data[i].coord, geoPointsToRemove)) {
+        } else if (this.checkIfGeoPointsMatch(dataset.data[i].coord, geoPointsToKeep) === false) {
           dataset.data.splice(i, 1);
           i--;
         }
@@ -222,28 +247,25 @@ export class HomeComponent implements OnInit {
     return false;
   }
 
-  removeStationsNotInManchette() {
-    const stationsToRemove: number[] = [];
+  setStationsInManchette() {
+    const lines = this.runInfos.filter(line => line.hidden === false);
+    const stationsToDisplay: string[] = [];
+    const manchette = this.selectedManchette;
 
-    for (let i = 0; i < this.stations[0].stations.length; i++) {
-      if (!this.stationIsInManchette(this.stations[0].stations[i], this.selectedManchette.stop_points)) {
-        stationsToRemove.push(i);
+    lines.forEach(line => {
+      for (let i = 0; i < line.stations.length; i++) {
+        if ( this.stationIsInManchette(line.stations[i], manchette.stop_points) && !stationsToDisplay.includes(line.stations[i])) {
+          stationsToDisplay.push(line.stations[i]);
+        }
       }
-    }
-    if (stationsToRemove.length === this.stations[0].stations.length) {
-      this.manchetteStatus = "Aucune station de manchette trouvée sur cette ligne";
-      return 1;
-    }
-    this.manchetteStatus = null;
-    for (let i = stationsToRemove.length - 1; i >= 0; i--) {
-      this.stations[0].stations.splice(stationsToRemove[i], 1);
-    }
-    return 0;
+    });
+    this.displayedStations = stationsToDisplay;
   }
 
   resetManchettes() {
     if (this.savedStations && this.savedStations.length > 0) {
-      this.stations[0].stations = this.savedStations; 
+      this.stations = this.savedStations;
+      this.savedStations = [];
       for (let i = 0; i < this.chart.config.data.datasets.length; i++) {
         if (!this.chart.config.data.datasets[i].realTime) {
           this.chart.config.data.datasets[i].data = JSON.parse(JSON.stringify(this.dataSaves[i]));
@@ -256,19 +278,17 @@ export class HomeComponent implements OnInit {
   }
 
   selectManchette(manchette: any) {
-    if (this.savedStations) {
-      this.resetManchettes();
-    }
+    this.resetManchettes();
     this.clearRealTime();
     this.selectedManchette = manchette;
-    this.savedStations = this.stations[0].stations.slice(0);
-    if (this.removeStationsNotInManchette() === 1) {
-      return;
-    }
-    this.maxStation = this.stations[0].stations.length;
+    this.savedStations = JSON.parse(JSON.stringify(this.stations));
+    this.setStationsInManchette();
+    this.maxStation = this.displayedStations.length;
+    this.getStationWithGeoPoint(48.800075, 2.128087);
+    //this.maxStation = this.stations[0].stations.length;
     this.updateInfo(this.chart);
     this.removePointsOutsideManchette();
-    this.fixManchettePointsOffset();
+    this.changePointsY();
     this.chart.update();
   }
 
@@ -584,24 +604,7 @@ export class HomeComponent implements OnInit {
               stepSize: 1,
               padding: 50,
               callback: (value: number, index: number) => {
-                let stationsLabel: string;
-                let firstStation: string;
-                let lastStation: string;
-                this.stations.forEach(station => {
-                  if (station.stations[value]) {
-                    if (!stationsLabel) {
-                      stationsLabel = station.stations[value];
-                      firstStation = station.stations[value];
-                    } else {
-                      stationsLabel += ' / ' + station.stations[value];
-                      lastStation = station.stations[value];
-                    }
-                  }
-                });
-                if (stationsLabel && stationsLabel.length > 40) {
-                  stationsLabel = firstStation + '...' + lastStation;
-                }
-                return stationsLabel;
+                return this.displayedStations[value];
               }
             }
           }
