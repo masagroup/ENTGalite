@@ -59,6 +59,7 @@ export class HomeComponent implements OnInit {
   continueUpdateStopTrains: boolean = false;
   manchetteStatus: string = null;
   selected = 0;
+  defaultManchette: string = "fuck it";
   private worker = [
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
@@ -286,15 +287,16 @@ export class HomeComponent implements OnInit {
   }
 
   selectManchette(manchette: any) {
+    console.log(manchette);
     this.resetManchettes();
     this.clearRealTime();
     this.selectedManchette = manchette;
     this.savedStations = JSON.parse(JSON.stringify(this.stations));
     this.setStationsInManchette();
     this.maxStation = this.displayedStations.length - 1;
-    this.updateInfo(this.chart);
     this.removePointsOutsideManchette();
     this.changePointsY();
+    this.updateInfo(this.chart);
     this.chart.update();
   }
 

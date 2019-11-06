@@ -1,8 +1,7 @@
 <div class="row ml-3">
   <div class="ml-3 mt-5">
     <mat-form-field>
-      <mat-label>Manchette</mat-label>
-      <mat-select [(value)]="selected">
+      <mat-select [(value)]="defaultManchette">
         <mat-option *ngFor="let manchette of manchettes; let i = index" (click)="selectManchette(manchette)" value="{{ i }}">{{ manchette.name }}</mat-option>
       </mat-select>
     </mat-form-field>
