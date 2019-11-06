@@ -58,6 +58,7 @@ export class HomeComponent implements OnInit {
   linesName: string[] = [];
   continueUpdateStopTrains: boolean = false;
   manchetteStatus: string = null;
+  selected = 0;
   private worker = [
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
@@ -183,7 +184,7 @@ export class HomeComponent implements OnInit {
     this.chart.config.data.datasets.forEach((dataset: any) => {
       dataset.data.forEach((point: any) => {
         for (let i = 0; i < this.displayedStations.length; i++) {
-          if (!point.coord || point.realTime) {
+          if (!point.coord || point.realTime || point.prediction === false) {
             continue;
           }
           if (point.coord.lat === coords[i].lat && point.coord.lon === coords[i].lon) {
@@ -284,8 +285,6 @@ export class HomeComponent implements OnInit {
     this.savedStations = JSON.parse(JSON.stringify(this.stations));
     this.setStationsInManchette();
     this.maxStation = this.displayedStations.length;
-    this.getStationWithGeoPoint(48.800075, 2.128087);
-    //this.maxStation = this.stations[0].stations.length;
     this.updateInfo(this.chart);
     this.removePointsOutsideManchette();
     this.changePointsY();
