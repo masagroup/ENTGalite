@@ -100,7 +100,6 @@ export class HomeComponent implements OnInit {
   private savedStations: any[];
   private selectedManchette: any = null;
   private dataSaves: any[] = [];
-  private selectedLineName: string;
 
   constructor(private homeService: HomeService) {}
 
@@ -133,11 +132,11 @@ export class HomeComponent implements OnInit {
     this.initLines();
     this.initChart();
     for (let line of this.linesName) {
-      console.log(line);
       this.selectLine(line, true);
       this.selectLine(line, false);
       this.selectLine(line, true);
     }
+    this.selectManchette(this.manchettes[0]);
     this.isLoading = false;
   }
 
@@ -292,7 +291,7 @@ export class HomeComponent implements OnInit {
     this.selectedManchette = manchette;
     this.savedStations = JSON.parse(JSON.stringify(this.stations));
     this.setStationsInManchette();
-    this.maxStation = this.displayedStations.length;
+    this.maxStation = this.displayedStations.length - 1;
     this.updateInfo(this.chart);
     this.removePointsOutsideManchette();
     this.changePointsY();
@@ -302,7 +301,6 @@ export class HomeComponent implements OnInit {
   selectLine(lineName: string, checked: boolean) {
     const _hiddenDataSets = this.hiddenDataSets;
     if (checked) {
-      this.selectedLineName = lineName;
       _hiddenDataSets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
           this.chart.config.data.datasets.push(dataset);
