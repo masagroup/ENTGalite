@@ -132,6 +132,12 @@ export class HomeComponent implements OnInit {
     this.linesName = this.linesName.filter((x: string) => x);
     this.initLines();
     this.initChart();
+    for (let line of this.linesName) {
+      console.log(line);
+      this.selectLine(line, true);
+      this.selectLine(line, false);
+      this.selectLine(line, true);
+    }
     this.isLoading = false;
   }
 
@@ -152,7 +158,7 @@ export class HomeComponent implements OnInit {
       for (let j = 0; j < this.data.lines[i].stations.length; j++) {
         const station = this.data.lines[i].stations[j];
         if (station.name === name) {
-          return {lat: Number(station.coord.lat), lon: Number(station.coord.lon)};
+          return { lat: Number(station.coord.lat), lon: Number(station.coord.lon) };
         }
       }
     }
@@ -199,8 +205,7 @@ export class HomeComponent implements OnInit {
     const pointsToKeep: GeoPoint[] = [];
 
     for (let i = 0; i < this.displayedStations.length; i++) {
-      const coord = 
-      pointsToKeep.push(this.getStationGeoPoint(this.displayedStations[i]));
+      const coord = pointsToKeep.push(this.getStationGeoPoint(this.displayedStations[i]));
     }
     console.log(pointsToKeep);
     return pointsToKeep;
@@ -255,7 +260,10 @@ export class HomeComponent implements OnInit {
 
     lines.forEach(line => {
       for (let i = 0; i < line.stations.length; i++) {
-        if ( this.stationIsInManchette(line.stations[i], manchette.stop_points) && !stationsToDisplay.includes(line.stations[i])) {
+        if (
+          this.stationIsInManchette(line.stations[i], manchette.stop_points) &&
+          !stationsToDisplay.includes(line.stations[i])
+        ) {
           stationsToDisplay.push(line.stations[i]);
         }
       }
@@ -417,6 +425,12 @@ export class HomeComponent implements OnInit {
   }
 
   private updateRealTime() {
+    let minutes: string = '';
+    if (this.simTime.getMinutes().toString().length === 1) {
+      minutes = 0 + this.simTime.getMinutes().toString();
+    } else {
+      minutes = this.simTime.getMinutes().toString();
+    }
     const data = [
       {
         x: this.simTime.getTime(),
@@ -455,7 +469,7 @@ export class HomeComponent implements OnInit {
     }
     _datasets.push({
       type: 'scatter',
-      label: this.simTime.getHours() + ':' + this.simTime.getMinutes(),
+      label: this.simTime.getHours() + ':' + minutes,
       data: data,
       showLine: true,
       borderColor: 'black',
@@ -496,7 +510,7 @@ export class HomeComponent implements OnInit {
     _datasets.forEach((dataset: any, index: number) => {
       _datasets[index].data = _datasets[index].data.filter((data: any) => data.coord);
       if (
-        (dataset.data.length === 0) ||
+        dataset.data.length === 0 ||
         (dataset.data[0].x < min && dataset.data[dataset.data.length - 1].x < min) ||
         (dataset.data[0].x > max && dataset.data[dataset.data.length - 1].x > max)
       ) {
@@ -745,7 +759,6 @@ export class HomeComponent implements OnInit {
     this.chart.options.scales.xAxes[0].time.unit = unit;
   }
   test(param: any) {
-    let lineName: string[] = [];
     let selected: boolean[] = [];
 
     for (let i = 0; i < param.length; i++) {
