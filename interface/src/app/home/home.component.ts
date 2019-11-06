@@ -7,8 +7,6 @@ import * as Chart from 'chart.js';
 //@ts-ignore
 const simplify = require('simplify-js');
 
-import MANCHETTES from './manchettes.json';
-
 Chart.defaults.global.elements.line.fill = false;
 Chart.pluginService.register({
   beforeDraw: function(chart: any) {
@@ -53,13 +51,12 @@ const colorList = [
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  manchettes = MANCHETTES;
+  manchettes: any = undefined;
   isLoading = true;
   linesName: string[] = [];
   continueUpdateStopTrains: boolean = false;
   manchetteStatus: string = null;
   selected = 0;
-  defaultManchette: string = "fuck it";
   private worker = [
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
@@ -127,6 +124,8 @@ export class HomeComponent implements OnInit {
     eel.expose(UpdateTrain, 'update_train_js');
     eel.expose(UpdateSimTime, 'update_sim_time_js');
     const walks = await eel.receive_walks_from_py()();
+    const manchettes = await eel.receive_manchettes_from_py()();
+    this.manchettes = JSON.parse(manchettes);
     this.data = JSON.parse(walks);
     this.linesName = this.data.lines.map((x: Line) => (x.marches.length > 0 ? x.line_name : undefined));
     this.linesName = this.linesName.filter((x: string) => x);
@@ -288,7 +287,6 @@ export class HomeComponent implements OnInit {
   }
 
   selectManchette(manchette: any) {
-    console.log(manchette);
     this.resetManchettes();
     this.clearRealTime();
     this.selectedManchette = manchette;

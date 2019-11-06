@@ -18,6 +18,7 @@ from pprint import pprint
 P = pysw.client_protocols
 
 WALKS = None
+MANCHETTES = None
 
 
 def send_train_to_interface(train: str):
@@ -36,6 +37,10 @@ def receive_walks_from_py() -> str:
     print(WALKS[0:100])
     return WALKS
 
+@eel.expose
+def receive_manchettes_from_py() -> str:
+    print(MANCHETTES)
+    return MANCHETTES
 
 class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
     """
@@ -124,10 +129,12 @@ def start_connection(config):
     pysw.app.connect(config, sim_factory=F, timeline_factory=None)
 
 
-def start_app(walks):
+def start_app(walks, manchettes):
     """Start Eel with either production or development configuration."""
     global WALKS
     WALKS = walks
+    global MANCHETTES
+    MANCHETTES = manchettes
     args = pysw.config.cmd_line_options("--dev",
                                         help="???",
                                         dest="dev", type=bool,
