@@ -2,13 +2,13 @@
 
 	{
 
-		"name" : "manchette 1",
+		"name" : "uesh la street",
 
 		"stop_points" : [
 
                 {
 
-                    "name":"St-Martin-d'Etampes",
+                    "name":"benoit",
 
                     "id":"stop_point:OCE:SP:RERC-87545350"
 
@@ -86,7 +86,7 @@
 
                 {
 
-                    "name":"Epinay-sur-Orge",
+                    "name":"fdp",
 
                     "id":"stop_point:OCE:SP:RERC-87545228"
 
@@ -122,7 +122,7 @@
 
 	{
 
-		"name" : "manchette 2",
+		"name" : "manchette 1298712890",
 
 		"stop_points" : [
 
