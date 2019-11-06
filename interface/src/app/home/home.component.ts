@@ -138,6 +138,7 @@ export class HomeComponent implements OnInit {
       this.selectLine(line, true);
     }
     this.selectManchette(this.manchettes[0]);
+    this.selectManchette(this.manchettes[0]);
     this.isLoading = false;
   }
 
