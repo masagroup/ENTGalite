@@ -193,7 +193,7 @@ export class HomeComponent implements OnInit {
           if (!point.coord || point.realTime || point.prediction === false) {
             continue;
           }
-          if (point.coord.lat === coords[i].lat && point.coord.lon === coords[i].lon) {
+          if (this.displayedStations[i][0] !== '*' && point.coord.lat === coords[i].lat && point.coord.lon === coords[i].lon) {
             point.y = i;
           }
         }
@@ -216,7 +216,7 @@ export class HomeComponent implements OnInit {
       return false;
     }
     for (let i = 0; i < geoPoints.length; i++) {
-      if (coord.lat === geoPoints[i].lat && coord.lon === geoPoints[i].lon) {
+      if (this.displayedStations[i][0] !== '*' && coord.lat === geoPoints[i].lat && coord.lon === geoPoints[i].lon) {
         return true;
       }
     }
@@ -244,9 +244,9 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  stationIsInManchette(station: string, manchetteStations: any[]) {
-    for (let i = 0; i < manchetteStations.length; i++) {
-      if (station === manchetteStations[i].name) {
+  manchetteStationExists(manchetteStation: string, stations: any[]) {
+    for (let i = 0; i < stations.length; i++) {
+      if (stations[i].stations.includes(manchetteStation)) {
         return true;
       }
     }
@@ -258,17 +258,14 @@ export class HomeComponent implements OnInit {
     const stationsToDisplay: string[] = [];
     const manchette = this.selectedManchette;
 
-    lines.forEach(line => {
-      for (let i = 0; i < line.stations.length; i++) {
-        if (
-          this.stationIsInManchette(line.stations[i], manchette.stop_points) &&
-          !stationsToDisplay.includes(line.stations[i])
-        ) {
-          stationsToDisplay.push(line.stations[i]);
+      for (let i = 0; i < manchette.stop_points.length; i++) {
+        if (this.manchetteStationExists(manchette.stop_points[i].name, this.stations)) {
+          stationsToDisplay.push(manchette.stop_points[i].name);
+        } else {
+          stationsToDisplay.push('*' + manchette.stop_points[i].name);
         }
       }
-    });
-    this.displayedStations = stationsToDisplay;
+      this.displayedStations = stationsToDisplay;
   }
 
   resetManchettes() {
@@ -288,7 +285,6 @@ export class HomeComponent implements OnInit {
 
   selectManchette(manchette: any) {
     this.resetManchettes();
-    this.clearRealTime();
     this.selectedManchette = manchette;
     this.savedStations = JSON.parse(JSON.stringify(this.stations));
     this.setStationsInManchette();
