@@ -285,7 +285,6 @@ export class HomeComponent implements OnInit {
 
   selectManchette(manchette: any) {
     this.resetManchettes();
-    this.clearRealTime();
     this.selectedManchette = manchette;
     this.savedStations = JSON.parse(JSON.stringify(this.stations));
     this.setStationsInManchette();
