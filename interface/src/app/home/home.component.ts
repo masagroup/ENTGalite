@@ -4,6 +4,7 @@ import { Context } from 'chartjs-plugin-datalabels';
 
 import { HomeService, MarchesByLines, Line, Point, RunInfo, Station, GeoPoint } from './home.service';
 import * as Chart from 'chart.js';
+import { FormControl } from '@angular/forms';
 //@ts-ignore
 const simplify = require('simplify-js');
 
@@ -57,6 +58,7 @@ export class HomeComponent implements OnInit {
   continueUpdateStopTrains: boolean = false;
   manchetteStatus: string = null;
   selected = 0;
+  _manchetteselect: any = undefined;
   private worker = [
     new Worker('./home.worker', { type: 'module' }),
     new Worker('./home.worker', { type: 'module' }),
@@ -193,7 +195,11 @@ export class HomeComponent implements OnInit {
           if (!point.coord || point.realTime || point.prediction === false) {
             continue;
           }
-          if (this.displayedStations[i][0] !== '*' && point.coord.lat === coords[i].lat && point.coord.lon === coords[i].lon) {
+          if (
+            this.displayedStations[i][0] !== '*' &&
+            point.coord.lat === coords[i].lat &&
+            point.coord.lon === coords[i].lon
+          ) {
             point.y = i;
           }
         }
@@ -258,14 +264,14 @@ export class HomeComponent implements OnInit {
     const stationsToDisplay: string[] = [];
     const manchette = this.selectedManchette;
 
-      for (let i = 0; i < manchette.stop_points.length; i++) {
-        if (this.manchetteStationExists(manchette.stop_points[i].name, this.stations)) {
-          stationsToDisplay.push(manchette.stop_points[i].name);
-        } else {
-          stationsToDisplay.push('*' + manchette.stop_points[i].name);
-        }
+    for (let i = 0; i < manchette.stop_points.length; i++) {
+      if (this.manchetteStationExists(manchette.stop_points[i].name, this.stations)) {
+        stationsToDisplay.push(manchette.stop_points[i].name);
+      } else {
+        stationsToDisplay.push('*' + manchette.stop_points[i].name);
       }
-      this.displayedStations = stationsToDisplay;
+    }
+    this.displayedStations = stationsToDisplay;
   }
 
   resetManchettes() {
@@ -769,5 +775,23 @@ export class HomeComponent implements OnInit {
     }
     this.lineSelectedSave = [];
     this.lineSelectedSave = selected;
+  }
+
+  compareSite(a: any, b: any): boolean {
+    if (!a || !b) {
+      return false;
+    }
+    console.log(a.name === b.name);
+    return a.name === b.name;
+  }
+  get selectedManchettes(): any {
+    if (this._manchetteselect === undefined) {
+      this._manchetteselect = this.manchettes[0];
+    }
+    return this._manchetteselect;
+  }
+  set selectedManchettes(selectedSite: any) {
+    this._manchetteselect = selectedSite;
+    this.selectManchette(selectedSite);
   }
 }
