@@ -1,18 +1,13 @@
 <div class="row ml-3">
-  <div class="ml-3 mt-5">
-    <mat-form-field>
-      <mat-label>Manchette</mat-label>
-      <mat-select [(value)]="selected">
-        <mat-option
-          *ngFor="let manchette of manchettes; let i = index"
-          (click)="selectManchette(manchette)"
-          value="{{ i }}"
-          >{{ manchette.name }}</mat-option
-        >
-      </mat-select>
-    </mat-form-field>
+  <div class="ml-1 mt-5 mb-3 col-4">
+    <select class="form-control" [(ngModel)]="selectedManchettes" [compareWith]="compareSite" value="manchette.name">
+      <option [ngValue]="manchettes[0]" ng-selected="manchettes[0].name">{{ manchettes[0].name }}</option>
+      <option *ngFor="let manchette of manchettes | slice: 1; let i = index" [ngValue]="manchette">{{
+        manchette.name
+      }}</option>
+    </select>
   </div>
-  <div class="ml-3 mt-5">
+  <div class="ml-3 mt-5 mb-2">
     <div class="btn-group" role="group" aria-label="Basic example">
       <button type="button" class="btn btn-secondary" (click)="changeRange('hour', 1)">1h</button>
       <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 30)">30min</button>
@@ -21,20 +16,20 @@
       <button type="button" class="btn btn-secondary" (click)="changeRange('minute', 5)">5min</button>
     </div>
   </div>
-  <div class="ml-3 mt-5">
+  <div class="ml-3 mt-5 mb-2">
     <div type="button" class="btn btn-secondary" (click)="centerToSimTime()">
       Recentrer
     </div>
   </div>
   <div *ngIf="!continueUpdateStopTrains">
-    <div class="ml-3 mt-5">
+    <div class="ml-3 mt-5 mb-2">
       <div type="button" class="btn btn-secondary" (click)="changeOption(true)">
         Activer la ligne continue
       </div>
     </div>
   </div>
   <div *ngIf="continueUpdateStopTrains">
-    <div class="ml-3 mt-5">
+    <div class="ml-3 mt-5 mb-2">
       <div type="button" class="btn btn-secondary" (click)="changeOption(false)">
         Désactiver la ligne continue
       </div>
