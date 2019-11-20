@@ -4,9 +4,11 @@ interface Point {
   x: number;
   y: number;
 }
+
 function deg2rad(deg: number) {
   return deg * (Math.PI / 180);
 }
+
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
@@ -15,9 +17,10 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in km
-  return d;
+  const dist = R * c; // Distance in km
+  return dist;
 }
+
 function project(p: Point, a: Point, b: Point) {
   const atob = { x: b.x - a.x, y: b.y - a.y };
   const atop = { x: p.x - a.x, y: p.y - a.y };
@@ -37,6 +40,7 @@ function project(p: Point, a: Point, b: Point) {
     t: t
   };
 }
+
 addEventListener('message', (message: any) => {
   const walk = message.data.walk.filter((data: any) => data && data.coord);
   const coordTrain = message.data.coordTrain;
@@ -85,6 +89,6 @@ addEventListener('message', (message: any) => {
   );
   const percent = (100 * dist) / totalDist;
   const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
-  const response = { y: y, runName: runName };
+  const response = { y: y, runName: runName, stations1: stations1, stations2: stations2, coordTrain: coordTrain };
   postMessage(response);
 });

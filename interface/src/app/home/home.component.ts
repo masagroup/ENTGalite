@@ -2,9 +2,8 @@ import { Component, OnInit } from '@angular/core';
 
 import { Context } from 'chartjs-plugin-datalabels';
 
-import { HomeService, MarchesByLines, Line, Point, RunInfo, Station, GeoPoint } from './home.service';
+import { HomeService, MarchesByLines, Line, Point, RunInfo, Station, GeoPoint, TrainPos } from './home.service';
 import * as Chart from 'chart.js';
-import { FormControl } from '@angular/forms';
 //@ts-ignore
 const simplify = require('simplify-js');
 
@@ -100,6 +99,8 @@ export class HomeComponent implements OnInit {
   private savedStations: any[];
   private selectedManchette: any = null;
   private dataSaves: any[] = [];
+  private manchetteStations: any[] = [];
+  private save: TrainPos[] = [];
 
   constructor(private homeService: HomeService) {}
 
@@ -213,7 +214,6 @@ export class HomeComponent implements OnInit {
     for (let i = 0; i < this.displayedStations.length; i++) {
       const coord = pointsToKeep.push(this.getStationGeoPoint(this.displayedStations[i]));
     }
-    console.log(pointsToKeep);
     return pointsToKeep;
   }
 
@@ -259,8 +259,23 @@ export class HomeComponent implements OnInit {
     return false;
   }
 
+  getSelectedStationsInfos(names: string[]) {
+    const stations: Station[] = [];
+
+    this.data.lines.forEach(line => {
+      line.stations.forEach(station => {
+        for (let i = 0; i < names.length; i++) {
+          const addedStations = stations.map(station => station.name);
+          if (names[i] === station.name && !addedStations.includes(station.name)) {
+            stations.push(station);
+          }
+        }
+      });
+    })
+    return stations;
+  }
+
   setStationsInManchette() {
-    const lines = this.runInfos.filter(line => line.hidden === false);
     const stationsToDisplay: string[] = [];
     const manchette = this.selectedManchette;
 
@@ -271,6 +286,7 @@ export class HomeComponent implements OnInit {
         stationsToDisplay.push('*' + manchette.stop_points[i].name);
       }
     }
+    this.manchetteStations = this.getSelectedStationsInfos(stationsToDisplay);
     this.displayedStations = stationsToDisplay;
   }
 
@@ -279,14 +295,162 @@ export class HomeComponent implements OnInit {
       this.stations = this.savedStations;
       this.savedStations = [];
       for (let i = 0; i < this.chart.config.data.datasets.length; i++) {
-        if (!this.chart.config.data.datasets[i].realTime) {
+        if (!this.chart.config.data.datasets[i].realTime && this.chart.config.data.datasets[i].prediction === true) {
           this.chart.config.data.datasets[i].data = JSON.parse(JSON.stringify(this.dataSaves[i]));
         }
       }
       this.maxStation = this.stations[0].stations.length;
-      this.clearRealTime();
+      //this.clearRealTime();
       this.chart.update();
     }
+  }
+
+  getWalksWithTrainName(trainName: string) {
+    for (let i = 0; i < this.data.lines.length; i++) {
+      for (let j = 0; j < this.data.lines[i].marches.length; j++) {
+        if (this.data.lines[i].marches[j].marche_name === trainName) {
+          return this.data.lines[i].marches[j];
+        }
+      }
+    }
+    return null;
+  }
+
+  getManchetteClosestStations(train: TrainPos) {
+    const walks = this.getWalksWithTrainName(train.trainName);
+    const manchetteStations = JSON.parse(JSON.stringify(this.manchetteStations));
+    let closestStation1: any;
+    let closestStation2: any;
+    let distClosestStation1 = this.homeService.getDistanceFromLatLonInKm(
+      train.lat,
+      train.lon,
+      manchetteStations[0].coord.lat,
+      manchetteStations[0].coord.lon
+    );
+    let distClosestStation2 = 1000000;
+
+    for (let i = 0; i < manchetteStations.length; i++) {
+      const dist = this.homeService.getDistanceFromLatLonInKm(
+        train.lat,
+        train.lon,
+        manchetteStations[i].coord.lat,
+        manchetteStations[i].coord.lon
+      );
+      if (dist < distClosestStation1) {
+        closestStation1 = manchetteStations[i];
+        distClosestStation1 = dist;
+      }
+    }
+    for (let i = 0; i < manchetteStations.length; i++) {
+      const dist = this.homeService.getDistanceFromLatLonInKm(
+        train.lat,
+        train.lon,
+        manchetteStations[i].coord.lat,
+        manchetteStations[i].coord.lon
+      );
+      if (dist < distClosestStation2 && manchetteStations[i] !== closestStation1) {
+        closestStation2 = manchetteStations[i];
+        distClosestStation2 = dist;
+      }
+    }
+    console.log("Train : ", train);
+    console.log(closestStation1, closestStation2);
+  }
+
+  trainIsInManchette(train: TrainPos) {
+    for (let dataset of this.chart.config.data.datasets) {
+      if (dataset.label === train.trainName) {
+        this.getManchetteClosestStations(train);
+      }
+    }
+    return false;
+  }
+
+  getTrainWalkInManchette(trainName: string) {
+    const walks = this.getWalksWithTrainName(trainName).stop_points.map(point => point.stop_point_name);
+    const manchetteWalks = [];
+
+    for (let i = 0; i < walks.length; i++) {
+      for (let j = 0; j < this.manchetteStations.length; j++) {
+        if (walks[i] === this.manchetteStations[j].name) {
+          manchetteWalks.push(this.manchetteStations[j]);
+        }
+      }
+    }
+    return manchetteWalks;
+  }
+
+  getTrainWalk(trainName: string): any {
+    const lines = this.data.lines;
+    const walks = this.getWalksWithTrainName(trainName).stop_points.map(point => point.stop_point_name);
+    const stations = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      for (let j = 0; j < lines[i].stations.length; j++) {
+        for (let y = 0; y < walks.length; y++) {
+          if (walks[y] === lines[i].stations[j].name) {
+            stations.push(lines[i].stations[j]);
+          }
+        }
+      }
+    }
+    return stations;
+  }
+
+  createWalksPoints(walks: any) {
+    const points: any[] = [];
+    walks.forEach((walk: any) => {
+      let i = 0;
+      while (i < this.manchetteStations.length) {
+        if (this.manchetteStations[i].name === walk.name) {
+          break;
+        }
+        i++;
+      }
+      points.push({x: 0, y: i, coord: {lat: Number(walk.coord.lat), lon: Number(walk.coord.lon)}});
+      points.push({x: 0, y: i, coord: {lat: Number(walk.coord.lat), lon: Number(walk.coord.lon)}});
+    });
+    return points;
+  }
+
+  fillRealTime() {
+    console.log(this.chart);
+    this.save.forEach(train => {
+      const manchetteWalks = this.getTrainWalkInManchette(train.trainName);
+      const walks = this.getTrainWalk(train.trainName);
+      const manchettePoints = this.createWalksPoints(manchetteWalks);
+      const points = this.createWalksPoints(walks);
+      const y = this.homeService.getTrainPosY(points.reverse(), {x: train.lat, y: train.lon}, train.trainName);
+      const yManchette = this.homeService.getTrainPosY(manchettePoints.reverse(), {x: train.lat, y: train.lon}, train.trainName);
+      if (y.y < this.manchetteStations.length - 1) {
+        const dataset = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === false)[0];
+        if (dataset) {
+          console.log(dataset);
+          dataset.data.push({x: train.time, y: y.y});
+          console.log("reseted " + train.trainName, {x: train.time, y: y.y});
+        }
+      }
+    });
+    /*
+        const newDataset = {
+          type: 'scatter',
+          selectedLine: walk.selectedLine,
+          label: runName,
+          data: [{ x: this.simTime, y: y }],
+          showLine: true,
+          borderColor: walk.borderColor,
+          hidden: false,
+          pointRadius: 0,
+          borderWidth: 3,
+          prediction: false,
+          lastSimplify: 0
+    */
+  }
+
+  resetRealTimeSave() {
+    const realTime = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction === false);
+    
+    realTime.forEach((train: any) => {train.data = []});
   }
 
   selectManchette(manchette: any) {
@@ -298,6 +462,8 @@ export class HomeComponent implements OnInit {
     this.removePointsOutsideManchette();
     this.changePointsY();
     this.updateInfo(this.chart);
+    this.resetRealTimeSave();
+    this.fillRealTime();
     this.chart.update();
   }
 
@@ -306,7 +472,7 @@ export class HomeComponent implements OnInit {
     if (checked) {
       _hiddenDataSets.forEach((dataset: any) => {
         if (dataset.selectedLine === lineName) {
-          this.chart.config.data.datasets.push(dataset);
+          this.chart.config.data.datasets.push(JSON.parse(JSON.stringify(dataset)));
         }
       });
       const indexRunInfo = this.runInfos.findIndex(x => x.lineName === lineName);
@@ -329,6 +495,32 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  simplifyTraces(datasets: any, indexRealTime: number) {
+    if (datasets[indexRealTime].data.length - datasets[indexRealTime].lastSimplify > 500) {
+      if (datasets[indexRealTime].lastSimplify > 0) {
+        const data = datasets[indexRealTime].data.slice(datasets[indexRealTime].lastSimplify);
+        const simplified = simplify(data, 1);
+        datasets[indexRealTime].data.length = datasets[indexRealTime].lastSimplify;
+        datasets[indexRealTime].data.concat(simplified);
+      } else {
+        const data = datasets[indexRealTime].data.slice(datasets[indexRealTime].lastSimplify);
+        datasets[indexRealTime].data = simplify(data, 1);
+      }
+      datasets[indexRealTime].lastSimplify = datasets[indexRealTime].data.length;
+    }
+  }
+
+  stationCoordIsInManchette(lat: number, lon: number) {
+    for (let i = 0; i < this.manchetteStations.length; i++) {
+      const manchetteLat = Number(this.manchetteStations[i].coord.lat);
+      const manchetteLon = Number(this.manchetteStations[i].coord.lon);
+      if (lat == manchetteLat && lon == manchetteLon) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private async updateTrain(runName: string, coordTrain: Point) {
     const _datasets: any = this.hiddenDataSets;
     const index = _datasets.findIndex((x: any) => x.prediction && x.label === runName);
@@ -346,7 +538,6 @@ export class HomeComponent implements OnInit {
         let find: boolean = false;
         for (let trains of this.saveTimeUpdateTrains) {
           if (trains === 0) {
-            //console.log(this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]);
             for (let i = this.chart.config.data.datasets.length; i > 0; i--) {
               if (
                 this.chart.config.data.datasets[i] &&
@@ -377,7 +568,11 @@ export class HomeComponent implements OnInit {
       const runName = data.runName;
       const y = data.y;
       const indexRealTime = _datasets.findIndex((x: any) => x.label === runName && !x.prediction);
-      if (indexRealTime === -1) {
+      if (
+        indexRealTime === -1 &&
+        this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
+        this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
+      ) {
         const newDataset = {
           type: 'scatter',
           selectedLine: walk.selectedLine,
@@ -391,28 +586,28 @@ export class HomeComponent implements OnInit {
           prediction: false,
           lastSimplify: 0
         };
-        _datasets.push(newDataset);
+        _datasets.push(JSON.parse(JSON.stringify(newDataset)));
         if (this.stations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
-          this.chart.config.data.datasets.push(newDataset);
+          this.chart.config.data.datasets.push(JSON.parse(JSON.stringify(newDataset)));
         }
       } else {
         if (_datasets[indexRealTime]) {
           // @ts-ignore
           _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
-          if (_datasets[indexRealTime].data.length - _datasets[indexRealTime].lastSimplify > 500) {
-            if (_datasets[indexRealTime].lastSimplify > 0) {
-              const data = _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify);
-              const simplified = simplify(data, 1);
-              console.log(simplified);
-              _datasets[indexRealTime].data.length = _datasets[indexRealTime].lastSimplify;
-              _datasets[indexRealTime].data.concat(simplified);
-            } else {
-              const data = _datasets[indexRealTime].data.slice(_datasets[indexRealTime].lastSimplify);
-              _datasets[indexRealTime].data = simplify(data, 1);
-              console.log(_datasets[indexRealTime].data);
-            }
-            _datasets[indexRealTime].lastSimplify = _datasets[indexRealTime].data.length;
+          this.save.push({
+            trainName: runName,
+            time: this.simTime,
+            lat: data.coordTrain.x,
+            lon: data.coordTrain.y
+          });
+          if (
+            this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
+            this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
+          ) {
+            this.chart.data.datasets[indexRealTime].data.push({ x: this.simTime, y: y });
           }
+          this.simplifyTraces(this.chart.data.datasets, indexRealTime);
+          this.simplifyTraces(_datasets, indexRealTime);
         }
       }
     };
@@ -784,6 +979,11 @@ export class HomeComponent implements OnInit {
     console.log(a.name === b.name);
     return a.name === b.name;
   }
+
+  testFnct() {
+    console.log(this.stations);
+  }  
+
   get selectedManchettes(): any {
     if (this._manchetteselect === undefined) {
       this._manchetteselect = this.manchettes[0];
