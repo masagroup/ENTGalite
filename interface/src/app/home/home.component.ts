@@ -230,8 +230,6 @@ export class HomeComponent implements OnInit {
   }
 
   removePointsOutsideManchette() {
-    console.log(this.data);
-    console.log(this.chart);
     const geoPointsToKeep = this.getGeoPointsToKeep();
     let datasets = this.chart.config.data.datasets;
 
@@ -300,7 +298,6 @@ export class HomeComponent implements OnInit {
         }
       }
       this.maxStation = this.stations[0].stations.length;
-      //this.clearRealTime();
       this.chart.update();
     }
   }
@@ -314,56 +311,6 @@ export class HomeComponent implements OnInit {
       }
     }
     return null;
-  }
-
-  getManchetteClosestStations(train: TrainPos) {
-    const walks = this.getWalksWithTrainName(train.trainName);
-    const manchetteStations = JSON.parse(JSON.stringify(this.manchetteStations));
-    let closestStation1: any;
-    let closestStation2: any;
-    let distClosestStation1 = this.homeService.getDistanceFromLatLonInKm(
-      train.lat,
-      train.lon,
-      manchetteStations[0].coord.lat,
-      manchetteStations[0].coord.lon
-    );
-    let distClosestStation2 = 1000000;
-
-    for (let i = 0; i < manchetteStations.length; i++) {
-      const dist = this.homeService.getDistanceFromLatLonInKm(
-        train.lat,
-        train.lon,
-        manchetteStations[i].coord.lat,
-        manchetteStations[i].coord.lon
-      );
-      if (dist < distClosestStation1) {
-        closestStation1 = manchetteStations[i];
-        distClosestStation1 = dist;
-      }
-    }
-    for (let i = 0; i < manchetteStations.length; i++) {
-      const dist = this.homeService.getDistanceFromLatLonInKm(
-        train.lat,
-        train.lon,
-        manchetteStations[i].coord.lat,
-        manchetteStations[i].coord.lon
-      );
-      if (dist < distClosestStation2 && manchetteStations[i] !== closestStation1) {
-        closestStation2 = manchetteStations[i];
-        distClosestStation2 = dist;
-      }
-    }
-    console.log("Train : ", train);
-    console.log(closestStation1, closestStation2);
-  }
-
-  trainIsInManchette(train: TrainPos) {
-    for (let dataset of this.chart.config.data.datasets) {
-      if (dataset.label === train.trainName) {
-        this.getManchetteClosestStations(train);
-      }
-    }
-    return false;
   }
 
   getTrainWalkInManchette(trainName: string) {
@@ -414,37 +361,17 @@ export class HomeComponent implements OnInit {
   }
 
   fillRealTime() {
-    console.log(this.chart);
     this.save.forEach(train => {
-      const manchetteWalks = this.getTrainWalkInManchette(train.trainName);
       const walks = this.getTrainWalk(train.trainName);
-      const manchettePoints = this.createWalksPoints(manchetteWalks);
       const points = this.createWalksPoints(walks);
       const y = this.homeService.getTrainPosY(points.reverse(), {x: train.lat, y: train.lon}, train.trainName);
-      const yManchette = this.homeService.getTrainPosY(manchettePoints.reverse(), {x: train.lat, y: train.lon}, train.trainName);
       if (y.y < this.manchetteStations.length - 1) {
         const dataset = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === false)[0];
         if (dataset) {
-          console.log(dataset);
           dataset.data.push({x: train.time, y: y.y});
-          console.log("reseted " + train.trainName, {x: train.time, y: y.y});
         }
       }
     });
-    /*
-        const newDataset = {
-          type: 'scatter',
-          selectedLine: walk.selectedLine,
-          label: runName,
-          data: [{ x: this.simTime, y: y }],
-          showLine: true,
-          borderColor: walk.borderColor,
-          hidden: false,
-          pointRadius: 0,
-          borderWidth: 3,
-          prediction: false,
-          lastSimplify: 0
-    */
   }
 
   resetRealTimeSave() {
@@ -573,11 +500,14 @@ export class HomeComponent implements OnInit {
         this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
         this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
       ) {
+        const walks = this.getTrainWalk(runName);
+        const points = this.createWalksPoints(walks);
+        const pos = this.homeService.getTrainPosY(points.reverse(), {x: data.coordTrain.x, y: data.coordTrain.y}, runName);
         const newDataset = {
           type: 'scatter',
           selectedLine: walk.selectedLine,
           label: runName,
-          data: [{ x: this.simTime, y: y }],
+          data: [{ x: this.simTime, y: pos.y }],
           showLine: true,
           borderColor: walk.borderColor,
           hidden: false,
@@ -593,7 +523,10 @@ export class HomeComponent implements OnInit {
       } else {
         if (_datasets[indexRealTime]) {
           // @ts-ignore
-          _datasets[indexRealTime].data.push({ x: this.simTime, y: y });
+          const walks = this.getTrainWalk(runName);
+          const points = this.createWalksPoints(walks);
+          const pos = this.homeService.getTrainPosY(points.reverse(), {x: data.coordTrain.x, y: data.coordTrain.y}, runName);
+          _datasets[indexRealTime].data.push({ x: this.simTime, y: pos.y });
           this.save.push({
             trainName: runName,
             time: this.simTime,
@@ -604,7 +537,7 @@ export class HomeComponent implements OnInit {
             this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
             this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
           ) {
-            this.chart.data.datasets[indexRealTime].data.push({ x: this.simTime, y: y });
+            this.chart.data.datasets[indexRealTime].data.push({ x: this.simTime, y: pos.y });
           }
           this.simplifyTraces(this.chart.data.datasets, indexRealTime);
           this.simplifyTraces(_datasets, indexRealTime);
@@ -613,6 +546,7 @@ export class HomeComponent implements OnInit {
     };
     const clonedWalk = JSON.parse(JSON.stringify(walk.data));
     const clonedCoordTrain = JSON.parse(JSON.stringify(coordTrain));
+    const clonedWalk2 = this.createWalksPoints(this.getTrainWalkInManchette(runName));
     this.worker[this.actualWorker].postMessage({ walk: clonedWalk, coordTrain: clonedCoordTrain, runName });
     this.actualWorker += 1;
     if (this.actualWorker > this.maxWorker) {
