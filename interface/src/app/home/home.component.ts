@@ -367,7 +367,10 @@ export class HomeComponent implements OnInit {
       const y = this.homeService.getTrainPosY(points.reverse(), {x: train.lat, y: train.lon}, train.trainName);
       if (y.y < this.manchetteStations.length - 1) {
         const dataset = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === false)[0];
-        if (dataset) {
+        if (dataset &&
+          this.stationCoordIsInManchette(y.stations1.coord.lat, y.stations1.coord.lon) &&
+          this.stationCoordIsInManchette(y.stations2.coord.lat, y.stations2.coord.lon)
+        ) {
           dataset.data.push({x: train.time, y: y.y});
         }
       }
@@ -378,6 +381,15 @@ export class HomeComponent implements OnInit {
     const realTime = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction === false);
     
     realTime.forEach((train: any) => {train.data = []});
+  }
+
+  checkColor() {
+    const realTime = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction === false);
+
+    realTime.forEach((train: any) => {
+      const prediction = this.chart.config.data.datasets.filter((pred: any) => pred.label === train.label)[0];
+      train.borderColor = prediction.borderColor;
+    });
   }
 
   selectManchette(manchette: any) {
@@ -391,6 +403,7 @@ export class HomeComponent implements OnInit {
     this.updateInfo(this.chart);
     this.resetRealTimeSave();
     this.fillRealTime();
+    this.checkColor();
     this.chart.update();
   }
 
@@ -495,19 +508,18 @@ export class HomeComponent implements OnInit {
       const runName = data.runName;
       const y = data.y;
       const indexRealTime = _datasets.findIndex((x: any) => x.label === runName && !x.prediction);
-      if (
-        indexRealTime === -1 &&
-        this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
-        this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
-      ) {
-        const walks = this.getTrainWalk(runName);
-        const points = this.createWalksPoints(walks);
-        const pos = this.homeService.getTrainPosY(points.reverse(), {x: data.coordTrain.x, y: data.coordTrain.y}, runName);
+      this.save.push({
+        trainName: runName,
+        time: this.simTime,
+        lat: data.coordTrain.x,
+        lon: data.coordTrain.y
+      });
+      if (indexRealTime === -1) {
         const newDataset = {
           type: 'scatter',
           selectedLine: walk.selectedLine,
           label: runName,
-          data: [{ x: this.simTime, y: pos.y }],
+          data: [{}],
           showLine: true,
           borderColor: walk.borderColor,
           hidden: false,
@@ -516,10 +528,17 @@ export class HomeComponent implements OnInit {
           prediction: false,
           lastSimplify: 0
         };
-        _datasets.push(JSON.parse(JSON.stringify(newDataset)));
-        if (this.stations.findIndex((dataset: any) => walk.selectedLine === dataset.line) !== -1) {
-          this.chart.config.data.datasets.push(JSON.parse(JSON.stringify(newDataset)));
+        if (
+          this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
+          this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
+        ) {
+          const walks = this.getTrainWalk(runName);
+          const points = this.createWalksPoints(walks);
+          const pos = this.homeService.getTrainPosY(points.reverse(), {x: data.coordTrain.x, y: data.coordTrain.y}, runName);
+          newDataset.data.push({ x: this.simTime, y: pos.y });
         }
+        _datasets.push(JSON.parse(JSON.stringify(newDataset)));
+        this.chart.config.data.datasets.push(JSON.parse(JSON.stringify(newDataset)));
       } else {
         if (_datasets[indexRealTime]) {
           // @ts-ignore
@@ -527,17 +546,12 @@ export class HomeComponent implements OnInit {
           const points = this.createWalksPoints(walks);
           const pos = this.homeService.getTrainPosY(points.reverse(), {x: data.coordTrain.x, y: data.coordTrain.y}, runName);
           _datasets[indexRealTime].data.push({ x: this.simTime, y: pos.y });
-          this.save.push({
-            trainName: runName,
-            time: this.simTime,
-            lat: data.coordTrain.x,
-            lon: data.coordTrain.y
-          });
           if (
             this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
             this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
           ) {
             this.chart.data.datasets[indexRealTime].data.push({ x: this.simTime, y: pos.y });
+            this.checkColor();
           }
           this.simplifyTraces(this.chart.data.datasets, indexRealTime);
           this.simplifyTraces(_datasets, indexRealTime);
@@ -546,7 +560,6 @@ export class HomeComponent implements OnInit {
     };
     const clonedWalk = JSON.parse(JSON.stringify(walk.data));
     const clonedCoordTrain = JSON.parse(JSON.stringify(coordTrain));
-    const clonedWalk2 = this.createWalksPoints(this.getTrainWalkInManchette(runName));
     this.worker[this.actualWorker].postMessage({ walk: clonedWalk, coordTrain: clonedCoordTrain, runName });
     this.actualWorker += 1;
     if (this.actualWorker > this.maxWorker) {
@@ -888,35 +901,13 @@ export class HomeComponent implements OnInit {
     this.chart.options.scales.xAxes[0].time.unitStepSize = offset;
     this.chart.options.scales.xAxes[0].time.unit = unit;
   }
-  test(param: any) {
-    let selected: boolean[] = [];
-
-    for (let i = 0; i < param.length; i++) {
-      if (
-        (i < this.lineSelectedSave.length && param[i].selected !== this.lineSelectedSave[i]) ||
-        (this.lineSelectedSave.length === 0 && param[i].selected)
-      ) {
-        this.selectLine(param[i].value, param[i].selected);
-        this.selectLine(param[i].value, !param[i].selected);
-        this.selectLine(param[i].value, param[i].selected);
-      }
-      selected.push(param[i].selected);
-    }
-    this.lineSelectedSave = [];
-    this.lineSelectedSave = selected;
-  }
 
   compareSite(a: any, b: any): boolean {
     if (!a || !b) {
       return false;
     }
-    console.log(a.name === b.name);
     return a.name === b.name;
   }
-
-  testFnct() {
-    console.log(this.stations);
-  }  
 
   get selectedManchettes(): any {
     if (this._manchetteselect === undefined) {
