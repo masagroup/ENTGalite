@@ -41,23 +41,20 @@ function project(p: Point, a: Point, b: Point) {
   };
 }
 
-addEventListener('message', (message: any) => {
-  const walk = message.data.walk.filter((data: any) => data && data.coord);
-  const coordTrain = message.data.coordTrain;
-  const runName = message.data.runName;
+function getClosestStations(coordTrain: any, walks: any) {
   let bestStations: any;
   let stations1: any;
   let stations2: any;
   let minDist: number;
-  const len = walk.length - 1;
-  walk.forEach((element: any, i: number) => {
+  const len = walks.length - 1;
+  walks.forEach((element: any, i: number) => {
     if (i + 1 > len) {
       return;
     }
     const coord1: Point = { x: element.coord.lat, y: element.coord.lon };
     const coord2: Point = {
-      x: walk[i + 1].coord.lat,
-      y: walk[i + 1].coord.lon
+      x: walks[i + 1].coord.lat,
+      y: walks[i + 1].coord.lon
     };
     const position = project(coordTrain, coord1, coord2);
     if (Number.isNaN(position.t)) {
@@ -67,8 +64,53 @@ addEventListener('message', (message: any) => {
     if (!bestStations || testDist < minDist) {
       minDist = testDist;
       bestStations = position;
-      stations1 = walk[i];
-      stations2 = walk[i + 1];
+      stations1 = walks[i];
+      stations2 = walks[i + 1];
+    }
+  });
+
+  if (!bestStations) {
+    return;
+  }
+  return { station1: stations1, station2: stations2 };
+}
+
+function checkIfSameStationCoord(station1: any, station2: any) {
+  if (station1.coord.lat != station2.coord.lat || station1.coord.lon != station2.coord.lon) {
+    return false;
+  }
+  return true;
+}
+
+addEventListener('message', (message: any) => {
+  const manchetteWalks = message.data.manchetteWalks.filter((data: any) => data && data.coord);
+  const walks = message.data.walks.filter((data: any) => data && data.coord);
+  const coordTrain = message.data.coordTrain;
+  const runName = message.data.runName;
+  let bestStations: any;
+  let stations1: any;
+  let stations2: any;
+  let minDist: number;
+  const len = manchetteWalks.length - 1;
+  manchetteWalks.forEach((element: any, i: number) => {
+    if (i + 1 > len) {
+      return;
+    }
+    const coord1: Point = { x: element.coord.lat, y: element.coord.lon };
+    const coord2: Point = {
+      x: manchetteWalks[i + 1].coord.lat,
+      y: manchetteWalks[i + 1].coord.lon
+    };
+    const position = project(coordTrain, coord1, coord2);
+    if (Number.isNaN(position.t)) {
+      return;
+    }
+    const testDist = getDistanceFromLatLonInKm(position.point.x, position.point.y, coordTrain.x, coordTrain.y);
+    if (!bestStations || testDist < minDist) {
+      minDist = testDist;
+      bestStations = position;
+      stations1 = manchetteWalks[i];
+      stations2 = manchetteWalks[i + 1];
     }
   });
 
@@ -87,8 +129,14 @@ addEventListener('message', (message: any) => {
     bestStations.point.x,
     bestStations.point.y
   );
+  const closestStations = getClosestStations(coordTrain, walks);
+  let isOutsideManchette = false;
+  console.log(stations1, closestStations.station1);
+  if ((!checkIfSameStationCoord(stations1, closestStations.station1) && !checkIfSameStationCoord(stations1, closestStations.station2)) || (!checkIfSameStationCoord(stations2, closestStations.station1) && !checkIfSameStationCoord(stations2, closestStations.station2))) {
+    isOutsideManchette = true;
+  }
   const percent = (100 * dist) / totalDist;
   const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
-  const response = { y: y, runName: runName, stations1: stations1, stations2: stations2, coordTrain: coordTrain };
+  const response = { y: y, runName: runName, stations1: stations1, stations2: stations2, coordTrain: coordTrain, isOutsideManchette: isOutsideManchette };
   postMessage(response);
 });

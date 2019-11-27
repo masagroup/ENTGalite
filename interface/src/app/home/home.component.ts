@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { Context } from 'chartjs-plugin-datalabels';
 
-import { HomeService, MarchesByLines, Line, Point, RunInfo, Station, GeoPoint, TrainPos } from './home.service';
+import { HomeService, MarchesByLines, Line, Point, RunInfo, Station, GeoPoint, TrainPos, Marche } from './home.service';
 import * as Chart from 'chart.js';
 //@ts-ignore
 const simplify = require('simplify-js');
@@ -36,6 +36,11 @@ const colorList = [
   '#0088CE',
   '#e6194b',
   '#3cb44b',
+  '#4363d8',
+  '#f58231',
+  '#f032e6',
+  '#9a6324',
+  '#800000',
   '#4363d8',
   '#f58231',
   '#f032e6',
@@ -234,6 +239,9 @@ export class HomeComponent implements OnInit {
     let datasets = this.chart.config.data.datasets;
 
     this.chart.config.data.datasets.forEach((dataset: any) => {
+      if (dataset.borderColor === undefined) {
+        dataset.borderColor = '#323232';
+      }
       this.dataSaves.push(JSON.parse(JSON.stringify(dataset.data)));
     });
     datasets.forEach((dataset: any) => {
@@ -274,7 +282,7 @@ export class HomeComponent implements OnInit {
   }
 
   setStationsInManchette() {
-    const stationsToDisplay: string[] = [];
+    let stationsToDisplay: string[] = [];
     const manchette = this.selectedManchette;
 
     for (let i = 0; i < manchette.stop_points.length; i++) {
@@ -284,6 +292,7 @@ export class HomeComponent implements OnInit {
         stationsToDisplay.push('*' + manchette.stop_points[i].name);
       }
     }
+    stationsToDisplay = stationsToDisplay.reverse();
     this.manchetteStations = this.getSelectedStationsInfos(stationsToDisplay);
     this.displayedStations = stationsToDisplay;
   }
@@ -320,22 +329,39 @@ export class HomeComponent implements OnInit {
     for (let i = 0; i < walks.length; i++) {
       for (let j = 0; j < this.manchetteStations.length; j++) {
         if (walks[i] === this.manchetteStations[j].name) {
-          manchetteWalks.push(this.manchetteStations[j]);
+          const station = this.manchetteStations[j]
+          if (station.coord.lat && station.coord.lon) {
+            manchetteWalks.push({
+              coord: {
+                lat: Number(station.coord.lat),
+                lon: Number(station.coord.lon)
+              }
+            });
+          }
         }
       }
     }
     return manchetteWalks;
   }
 
+  containsStation(name: string, arr: any[]) {
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i].name === name) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   getTrainWalk(trainName: string): any {
     const lines = this.data.lines;
     const walks = this.getWalksWithTrainName(trainName).stop_points.map(point => point.stop_point_name);
-    const stations = [];
+    const stations: any = [];
 
     for (let i = 0; i < lines.length; i++) {
       for (let j = 0; j < lines[i].stations.length; j++) {
         for (let y = 0; y < walks.length; y++) {
-          if (walks[y] === lines[i].stations[j].name) {
+          if (walks[y] === lines[i].stations[j].name && !this.containsStation(walks[y], stations)) {
             stations.push(lines[i].stations[j]);
           }
         }
@@ -362,17 +388,11 @@ export class HomeComponent implements OnInit {
 
   fillRealTime() {
     this.save.forEach(train => {
-      const walks = this.getTrainWalk(train.trainName);
-      const points = this.createWalksPoints(walks);
-      const y = this.homeService.getTrainPosY(points.reverse(), {x: train.lat, y: train.lon}, train.trainName);
-      if (y.y < this.manchetteStations.length - 1) {
-        const dataset = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === false)[0];
-        if (dataset &&
-          this.stationCoordIsInManchette(y.stations1.coord.lat, y.stations1.coord.lon) &&
-          this.stationCoordIsInManchette(y.stations2.coord.lat, y.stations2.coord.lon)
-        ) {
-          dataset.data.push({x: train.time, y: y.y});
-        }
+      const newWalk = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === true)[0];
+      const y = this.homeService.getTrainPosY(newWalk.data, {x: train.lat, y: train.lon}, train.trainName);
+      const dataset = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === false)[0];
+      if (dataset && y && y.y) {
+        dataset.data.push({x: train.time, y: y.y});
       }
     });
   }
@@ -393,6 +413,7 @@ export class HomeComponent implements OnInit {
   }
 
   selectManchette(manchette: any) {
+    console.log(this.chart);
     this.resetManchettes();
     this.selectedManchette = manchette;
     this.savedStations = JSON.parse(JSON.stringify(this.stations));
@@ -469,6 +490,7 @@ export class HomeComponent implements OnInit {
     }
 
     const walk = <any>_datasets[index];
+    const newWalk = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === runName && dataset.prediction === true)[0];
     if (!this.saveUpdatedTrains.includes(runName)) {
       this.saveUpdatedTrains.push(runName);
       this.saveTimeUpdateTrains.push(1);
@@ -506,7 +528,6 @@ export class HomeComponent implements OnInit {
     }
     this.worker[this.actualWorker].onmessage = ({ data }) => {
       const runName = data.runName;
-      const y = data.y;
       const indexRealTime = _datasets.findIndex((x: any) => x.label === runName && !x.prediction);
       this.save.push({
         trainName: runName,
@@ -514,14 +535,14 @@ export class HomeComponent implements OnInit {
         lat: data.coordTrain.x,
         lon: data.coordTrain.y
       });
-      if (indexRealTime === -1) {
+      if (indexRealTime === -1 && !data.isOutsideManchette) {
         const newDataset = {
           type: 'scatter',
-          selectedLine: walk.selectedLine,
+          selectedLine: newWalk.selectedLine,
           label: runName,
           data: [{}],
           showLine: true,
-          borderColor: walk.borderColor,
+          borderColor: newWalk.borderColor,
           hidden: false,
           pointRadius: 0,
           borderWidth: 3,
@@ -532,25 +553,17 @@ export class HomeComponent implements OnInit {
           this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
           this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
         ) {
-          const walks = this.getTrainWalk(runName);
-          const points = this.createWalksPoints(walks);
-          const pos = this.homeService.getTrainPosY(points.reverse(), {x: data.coordTrain.x, y: data.coordTrain.y}, runName);
-          newDataset.data.push({ x: this.simTime, y: pos.y });
+          newDataset.data.push({ x: this.simTime, y: data.y });
         }
         _datasets.push(JSON.parse(JSON.stringify(newDataset)));
         this.chart.config.data.datasets.push(JSON.parse(JSON.stringify(newDataset)));
       } else {
         if (_datasets[indexRealTime]) {
           // @ts-ignore
-          const walks = this.getTrainWalk(runName);
-          const points = this.createWalksPoints(walks);
-          const pos = this.homeService.getTrainPosY(points.reverse(), {x: data.coordTrain.x, y: data.coordTrain.y}, runName);
-          _datasets[indexRealTime].data.push({ x: this.simTime, y: pos.y });
-          if (
-            this.stationCoordIsInManchette(data.stations1.coord.lat, data.stations1.coord.lon) &&
-            this.stationCoordIsInManchette(data.stations2.coord.lat, data.stations2.coord.lon)
-          ) {
-            this.chart.data.datasets[indexRealTime].data.push({ x: this.simTime, y: pos.y });
+          _datasets[indexRealTime].data.push({ x: this.simTime, y: data.y });
+          if (!data.isOutsideManchette) {
+            //console.log(data, this.getStationWithGeoPoint(data.stations1.coord.lat, data.stations1.coord.lon), this.getStationWithGeoPoint(data.stations2.coord.lat, data.stations2.coord.lon));
+            this.chart.data.datasets[indexRealTime].data.push({ x: this.simTime, y: data.y });
             this.checkColor();
           }
           this.simplifyTraces(this.chart.data.datasets, indexRealTime);
@@ -558,9 +571,12 @@ export class HomeComponent implements OnInit {
         }
       }
     };
-    const clonedWalk = JSON.parse(JSON.stringify(walk.data));
+    let clonedWalk = walk.data;
+    if (newWalk) {
+      clonedWalk = newWalk.data;
+    }
     const clonedCoordTrain = JSON.parse(JSON.stringify(coordTrain));
-    this.worker[this.actualWorker].postMessage({ walk: clonedWalk, coordTrain: clonedCoordTrain, runName });
+    this.worker[this.actualWorker].postMessage({ walks: walk.data, manchetteWalks: clonedWalk, coordTrain: clonedCoordTrain, runName });
     this.actualWorker += 1;
     if (this.actualWorker > this.maxWorker) {
       this.actualWorker = 0;

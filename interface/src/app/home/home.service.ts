@@ -240,7 +240,17 @@ export class HomeService {
     };
   }
 
+  removeEmptyCoords(walks: any) {
+    for (let i = 0; i < walks.length; i++) {
+      if (!walks[i].coord || !walks[i].coord.lat || !walks[i].coord.lon) {
+        walks.splice(i, 1);
+        i--;
+      }
+    }
+  }
+
   getTrainPosY(walks: any, coordTrain: any, runName: any) {
+    this.removeEmptyCoords(walks);
     let bestStations: any;
     let stations1: any;
     let stations2: any;
