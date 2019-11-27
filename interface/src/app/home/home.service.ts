@@ -240,27 +240,17 @@ export class HomeService {
     };
   }
 
-  removeEmptyCoords(walks: any) {
-    for (let i = 0; i < walks.length; i++) {
-      if (!walks[i].coord || !walks[i].coord.lat || !walks[i].coord.lon) {
-        walks.splice(i, 1);
-        i--;
-      }
-    }
-  }
-
-  getTrainPosY(walks: any, coordTrain: any, runName: any) {
-    this.removeEmptyCoords(walks);
+  getClosestStations(coordTrain: any, walks: any) {
     let bestStations: any;
     let stations1: any;
     let stations2: any;
     let minDist: number;
     const len = walks.length - 1;
-    walks.forEach((walk: any, i: number) => {
+    walks.forEach((element: any, i: number) => {
       if (i + 1 > len) {
         return;
       }
-      const coord1: Point = { x: walk.coord.lat, y: walk.coord.lon };
+      const coord1: Point = { x: element.coord.lat, y: element.coord.lon };
       const coord2: Point = {
         x: walks[i + 1].coord.lat,
         y: walks[i + 1].coord.lon
@@ -281,6 +271,66 @@ export class HomeService {
     if (!bestStations) {
       return;
     }
+    return { station1: stations1, station2: stations2 };
+  }
+
+  removeEmptyCoords(walks: any) {
+    for (let i = 0; i < walks.length; i++) {
+      if (!walks[i].coord || !walks[i].coord.lat || !walks[i].coord.lon) {
+        walks.splice(i, 1);
+        i--;
+      }
+    }
+  }
+  
+  checkIfSameStationCoord(station1: any, station2: any) {
+    if (station1.coord.lat != station2.coord.lat || station1.coord.lon != station2.coord.lon) {
+      return false;
+    }
+    return true;
+  }
+
+  checkIfSameStations(manchetteStation1: any, manchetteStation2: any, station1: any, station2: any) {
+    if ((!this.checkIfSameStationCoord(manchetteStation1, station1) && !this.checkIfSameStationCoord(manchetteStation1, station2)) ||
+        (!this.checkIfSameStationCoord(manchetteStation2, station1) && !this.checkIfSameStationCoord(manchetteStation2, station2))
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  getTrainPosY(walks: any, manchetteWalks: any, coordTrain: any, runName: any) {
+    this.removeEmptyCoords(manchetteWalks);
+    let bestStations: any;
+    let stations1: any;
+    let stations2: any;
+    let minDist: number;
+    const len = manchetteWalks.length - 1;
+    manchetteWalks.forEach((walk: any, i: number) => {
+      if (i + 1 > len) {
+        return;
+      }
+      const coord1: Point = { x: walk.coord.lat, y: walk.coord.lon };
+      const coord2: Point = {
+        x: manchetteWalks[i + 1].coord.lat,
+        y: manchetteWalks[i + 1].coord.lon
+      };
+      const position = this.project(coordTrain, coord1, coord2);
+      if (Number.isNaN(position.t)) {
+        return;
+      }
+      const testDist = this.getDistanceFromLatLonInKm(position.point.x, position.point.y, coordTrain.x, coordTrain.y);
+      if (!bestStations || testDist < minDist) {
+        minDist = testDist;
+        bestStations = position;
+        stations1 = manchetteWalks[i];
+        stations2 = manchetteWalks[i + 1];
+      }
+    });
+  
+    if (!bestStations) {
+      return;
+    }
     const totalDist = this.getDistanceFromLatLonInKm(
       stations1.coord.lat,
       stations1.coord.lon,
@@ -293,9 +343,14 @@ export class HomeService {
       bestStations.point.x,
       bestStations.point.y
     );
+    const closestStations = this.getClosestStations(coordTrain, walks);
+    let isOutsideManchette = false;
+    if (!this.checkIfSameStations(stations1, stations2, closestStations.station1, closestStations.station2)) {
+      isOutsideManchette = true;
+    }
     const percent = (100 * dist) / totalDist;
     const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
-    const response = { y: y, runName: runName, stations1: stations1, stations2: stations2, coordTrain: coordTrain };
+    const response = { y: y, runName: runName, stations1: stations1, stations2: stations2, coordTrain: coordTrain, isOutsideManchette: isOutsideManchette };
     return response;
   }
 }

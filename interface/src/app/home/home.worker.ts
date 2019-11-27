@@ -82,6 +82,17 @@ function checkIfSameStationCoord(station1: any, station2: any) {
   return true;
 }
 
+
+function checkIfSameStations(manchetteStation1: any, manchetteStation2: any, station1: any, station2: any) {
+  if ((!checkIfSameStationCoord(manchetteStation1, station1) && !checkIfSameStationCoord(manchetteStation1, station2)) ||
+      (!checkIfSameStationCoord(manchetteStation2, station1) && !checkIfSameStationCoord(manchetteStation2, station2))
+  ) {
+    return false;
+  }
+  return true;
+}
+
+
 addEventListener('message', (message: any) => {
   const manchetteWalks = message.data.manchetteWalks.filter((data: any) => data && data.coord);
   const walks = message.data.walks.filter((data: any) => data && data.coord);
@@ -131,8 +142,7 @@ addEventListener('message', (message: any) => {
   );
   const closestStations = getClosestStations(coordTrain, walks);
   let isOutsideManchette = false;
-  console.log(stations1, closestStations.station1);
-  if ((!checkIfSameStationCoord(stations1, closestStations.station1) && !checkIfSameStationCoord(stations1, closestStations.station2)) || (!checkIfSameStationCoord(stations2, closestStations.station1) && !checkIfSameStationCoord(stations2, closestStations.station2))) {
+  if (!checkIfSameStations(stations1, stations2, closestStations.station1, closestStations.station2)) {
     isOutsideManchette = true;
   }
   const percent = (100 * dist) / totalDist;

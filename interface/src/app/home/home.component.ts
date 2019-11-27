@@ -388,10 +388,12 @@ export class HomeComponent implements OnInit {
 
   fillRealTime() {
     this.save.forEach(train => {
-      const newWalk = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === true)[0];
-      const y = this.homeService.getTrainPosY(newWalk.data, {x: train.lat, y: train.lon}, train.trainName);
+      const index = this.hiddenDataSets.findIndex((x: any) => x.prediction && x.label === train.trainName);
+      const walk = <any>this.hiddenDataSets[index];
+      const manchetteWalk = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === true)[0];
+      const y = this.homeService.getTrainPosY(walk.data, manchetteWalk.data, {x: train.lat, y: train.lon}, train.trainName);
       const dataset = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === false)[0];
-      if (dataset && y && y.y) {
+      if (dataset && y && y.y && !y.isOutsideManchette) {
         dataset.data.push({x: train.time, y: y.y});
       }
     });
