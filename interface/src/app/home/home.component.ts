@@ -84,8 +84,6 @@ export class HomeComponent implements OnInit {
     new Worker('./home.worker', { type: 'module' })
   ];
   readonly maxWorker = this.worker.length - 1;
-  private lineSelectedSave: boolean[] = [];
-  private display: boolean = false;
   private saveUpdatedTrains: string[] = [];
   private saveTimeUpdateTrains: number[] = [];
   private chart: any;
@@ -94,7 +92,6 @@ export class HomeComponent implements OnInit {
   private stations: { line: string; stations: string[] }[] = [];
   private displayedStations: string[] = [];
   private simTime: Date;
-  private colorIndex = 0;
   private runInfos: RunInfo[] = [];
   private maxStation: number;
   private minTime: number;
@@ -909,7 +906,6 @@ export class HomeComponent implements OnInit {
         minStation: minStation,
         maxStation: maxStation
       });
-      this.colorIndex += 1;
     });
   }
 
