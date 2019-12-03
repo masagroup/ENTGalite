@@ -226,9 +226,9 @@ export class HomeService {
     const len = atob.x * atob.x + atob.y * atob.y;
     let dot = atop.x * atob.x + atop.y * atob.y;
     const t = Math.min(1, Math.max(0, dot / len));
-  
+
     dot = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
-  
+
     return {
       point: {
         x: a.x + atob.x * t,

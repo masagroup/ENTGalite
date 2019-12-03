@@ -12,8 +12,8 @@ Chart.pluginService.register({
   beforeDraw: function(chart: any) {
     const ctx = chart.ctx;
     const chartArea = chart.chartArea;
+    ctx.fillStyle = '#999999';
     ctx.save();
-    ctx.fillStyle = 'lightgray';
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
     ctx.fill();
     ctx.rect(
@@ -426,7 +426,6 @@ export class HomeComponent implements OnInit {
     this.updateInfo(this.chart);
     this.resetRealTimeSave();
     this.fillRealTime();
-    this.checkColor();
     this.chart.update();
   }
 
@@ -544,7 +543,7 @@ export class HomeComponent implements OnInit {
           label: runName,
           data: [{}],
           showLine: true,
-          borderColor: newWalk.borderColor,
+          borderColor: "#0000CD",
           hidden: false,
           pointRadius: 0,
           borderWidth: 3,
@@ -566,16 +565,15 @@ export class HomeComponent implements OnInit {
           if (!data.isOutsideManchette) {
             //console.log(data, this.getStationWithGeoPoint(data.stations1.coord.lat, data.stations1.coord.lon), this.getStationWithGeoPoint(data.stations2.coord.lat, data.stations2.coord.lon));
             this.chart.data.datasets[indexRealTime].data.push({ x: this.simTime, y: data.y });
-            this.checkColor();
           }
           this.simplifyTraces(this.chart.data.datasets, indexRealTime);
           this.simplifyTraces(_datasets, indexRealTime);
         }
       }
     };
-    let clonedWalk = walk.data;
+    let clonedWalk = JSON.parse(JSON.stringify(walk.data));
     if (newWalk) {
-      clonedWalk = newWalk.data;
+      clonedWalk = JSON.parse(JSON.stringify(newWalk.data));
     }
     const clonedCoordTrain = JSON.parse(JSON.stringify(coordTrain));
     this.worker[this.actualWorker].postMessage({ walks: walk.data, manchetteWalks: clonedWalk, coordTrain: clonedCoordTrain, runName });
@@ -884,7 +882,7 @@ export class HomeComponent implements OnInit {
 
   private initLines() {
     this.data.lines.forEach(line => {
-      const color = colorList[this.colorIndex];
+      const color = "#FFFFFF";
       const {
         traces,
         stations,

@@ -24,7 +24,7 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
 function project(p: Point, a: Point, b: Point) {
   const atob = { x: b.x - a.x, y: b.y - a.y };
   const atop = { x: p.x - a.x, y: p.y - a.y };
-  const len = atob.x * atob.x + atob.y * atob.y;
+  const len = (atob.x * atob.x + atob.y * atob.y);
   let dot = atop.x * atob.x + atop.y * atob.y;
   const t = Math.min(1, Math.max(0, dot / len));
 
