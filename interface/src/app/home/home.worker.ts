@@ -24,7 +24,7 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
 function project(p: Point, a: Point, b: Point) {
   const atob = { x: b.x - a.x, y: b.y - a.y };
   const atop = { x: p.x - a.x, y: p.y - a.y };
-  const len = (atob.x * atob.x + atob.y * atob.y);
+  const len = atob.x * atob.x + atob.y * atob.y;
   let dot = atop.x * atob.x + atop.y * atob.y;
   const t = Math.min(1, Math.max(0, dot / len));
 
@@ -76,22 +76,22 @@ function getClosestStations(coordTrain: any, walks: any) {
 }
 
 function checkIfSameStationCoord(station1: any, station2: any) {
-  if (station1.coord.lat != station2.coord.lat || station1.coord.lon != station2.coord.lon) {
-    return false;
+  if (station1.coord.lat === station2.coord.lat && station1.coord.lon === station2.coord.lon) {
+    return true;
   }
-  return true;
+  return false;
 }
-
 
 function checkIfSameStations(manchetteStation1: any, manchetteStation2: any, station1: any, station2: any) {
-  if ((!checkIfSameStationCoord(manchetteStation1, station1) && !checkIfSameStationCoord(manchetteStation1, station2)) ||
-      (!checkIfSameStationCoord(manchetteStation2, station1) && !checkIfSameStationCoord(manchetteStation2, station2))
+  if (
+    checkIfSameStationCoord(manchetteStation1, station1) ||
+    checkIfSameStationCoord(manchetteStation1, station2) ||
+    (checkIfSameStationCoord(manchetteStation2, station1) || checkIfSameStationCoord(manchetteStation2, station2))
   ) {
-    return false;
+    return true;
   }
-  return true;
+  return false;
 }
-
 
 addEventListener('message', (message: any) => {
   const manchetteWalks = message.data.manchetteWalks.filter((data: any) => data && data.coord);
@@ -147,6 +147,13 @@ addEventListener('message', (message: any) => {
   }
   const percent = (100 * dist) / totalDist;
   const y = stations1.y + ((stations2.y - stations1.y) / 100) * percent;
-  const response = { y: y, runName: runName, stations1: stations1, stations2: stations2, coordTrain: coordTrain, isOutsideManchette: isOutsideManchette };
+  const response = {
+    y: y,
+    runName: runName,
+    stations1: stations1,
+    stations2: stations2,
+    coordTrain: coordTrain,
+    isOutsideManchette: isOutsideManchette
+  };
   postMessage(response);
 });

@@ -4,6 +4,8 @@ import { Context } from 'chartjs-plugin-datalabels';
 
 import { HomeService, MarchesByLines, Line, Point, RunInfo, Station, GeoPoint, TrainPos, Marche } from './home.service';
 import * as Chart from 'chart.js';
+import { _getShadowRoot } from '@angular/material/progress-spinner/typings/progress-spinner';
+import { count } from 'rxjs/operators';
 //@ts-ignore
 const simplify = require('simplify-js');
 
@@ -274,7 +276,7 @@ export class HomeComponent implements OnInit {
           }
         }
       });
-    })
+    });
     return stations;
   }
 
@@ -326,7 +328,7 @@ export class HomeComponent implements OnInit {
     for (let i = 0; i < walks.length; i++) {
       for (let j = 0; j < this.manchetteStations.length; j++) {
         if (walks[i] === this.manchetteStations[j].name) {
-          const station = this.manchetteStations[j]
+          const station = this.manchetteStations[j];
           if (station.coord.lat && station.coord.lon) {
             manchetteWalks.push({
               coord: {
@@ -377,8 +379,8 @@ export class HomeComponent implements OnInit {
         }
         i++;
       }
-      points.push({x: 0, y: i, coord: {lat: Number(walk.coord.lat), lon: Number(walk.coord.lon)}});
-      points.push({x: 0, y: i, coord: {lat: Number(walk.coord.lat), lon: Number(walk.coord.lon)}});
+      points.push({ x: 0, y: i, coord: { lat: Number(walk.coord.lat), lon: Number(walk.coord.lon) } });
+      points.push({ x: 0, y: i, coord: { lat: Number(walk.coord.lat), lon: Number(walk.coord.lon) } });
     });
     return points;
   }
@@ -387,19 +389,30 @@ export class HomeComponent implements OnInit {
     this.save.forEach(train => {
       const index = this.hiddenDataSets.findIndex((x: any) => x.prediction && x.label === train.trainName);
       const walk = <any>this.hiddenDataSets[index];
-      const manchetteWalk = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === true)[0];
-      const y = this.homeService.getTrainPosY(walk.data, manchetteWalk.data, {x: train.lat, y: train.lon}, train.trainName);
-      const dataset = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === train.trainName && dataset.prediction === false)[0];
+      const manchetteWalk = this.chart.config.data.datasets.filter(
+        (dataset: any) => dataset.label === train.trainName && dataset.prediction === true
+      )[0];
+      const y = this.homeService.getTrainPosY(
+        walk.data,
+        manchetteWalk.data,
+        { x: train.lat, y: train.lon },
+        train.trainName
+      );
+      const dataset = this.chart.config.data.datasets.filter(
+        (dataset: any) => dataset.label === train.trainName && dataset.prediction === false
+      )[0];
       if (dataset && y && y.y && !y.isOutsideManchette) {
-        dataset.data.push({x: train.time, y: y.y});
+        dataset.data.push({ x: train.time, y: y.y });
       }
     });
   }
 
   resetRealTimeSave() {
     const realTime = this.chart.config.data.datasets.filter((dataset: any) => dataset.prediction === false);
-    
-    realTime.forEach((train: any) => {train.data = []});
+
+    realTime.forEach((train: any) => {
+      train.data = [];
+    });
   }
 
   checkColor() {
@@ -486,44 +499,10 @@ export class HomeComponent implements OnInit {
     if (index === -1 || this.stations.findIndex(station => station.line === _datasets[index].selectedLine) === -1) {
       return;
     }
-
     const walk = <any>_datasets[index];
-    const newWalk = this.chart.config.data.datasets.filter((dataset: any) => dataset.label === runName && dataset.prediction === true)[0];
-    if (!this.saveUpdatedTrains.includes(runName)) {
-      this.saveUpdatedTrains.push(runName);
-      this.saveTimeUpdateTrains.push(1);
-    } else {
-      this.saveTimeUpdateTrains[this.saveUpdatedTrains.indexOf(runName)] += 1;
-      if (this.saveTimeUpdateTrains[this.saveUpdatedTrains.indexOf(runName)] === 2) {
-        let find: boolean = false;
-        for (let trains of this.saveTimeUpdateTrains) {
-          if (trains === 0) {
-            for (let i = this.chart.config.data.datasets.length; i > 0; i--) {
-              if (
-                this.chart.config.data.datasets[i] &&
-                this.chart.config.data.datasets[i].label ===
-                  this.saveUpdatedTrains[this.saveTimeUpdateTrains.indexOf(trains)]
-              ) {
-                if (this.continueUpdateStopTrains) {
-                  this.chart.config.data.datasets[i].data.push({
-                    x: this.simTime,
-                    y: this.chart.config.data.datasets[i].data[this.chart.config.data.datasets[i].data.length - 1].y
-                  });
-                }
-                break;
-              }
-            }
-            find = true;
-            this.saveTimeUpdateTrains[this.saveTimeUpdateTrains.indexOf(trains)] = 1;
-          }
-        }
-        if (find === false) {
-          for (let i = 0; i < this.saveTimeUpdateTrains.length; i++) {
-            this.saveTimeUpdateTrains[i] = 0;
-          }
-        }
-      }
-    }
+    const newWalk = this.chart.config.data.datasets.filter(
+      (dataset: any) => dataset.label === runName && dataset.prediction === true
+    )[0];
     this.worker[this.actualWorker].onmessage = ({ data }) => {
       const runName = data.runName;
       const indexRealTime = _datasets.findIndex((x: any) => x.label === runName && !x.prediction);
@@ -531,7 +510,8 @@ export class HomeComponent implements OnInit {
         trainName: runName,
         time: this.simTime,
         lat: data.coordTrain.x,
-        lon: data.coordTrain.y
+        lon: data.coordTrain.y,
+        tmp: false
       });
       if (indexRealTime === -1 && !data.isOutsideManchette) {
         const newDataset = {
@@ -540,7 +520,7 @@ export class HomeComponent implements OnInit {
           label: runName,
           data: [{}],
           showLine: true,
-          borderColor: "#0000CD",
+          borderColor: '#0000CD',
           hidden: false,
           pointRadius: 0,
           borderWidth: 3,
@@ -573,7 +553,12 @@ export class HomeComponent implements OnInit {
       clonedWalk = JSON.parse(JSON.stringify(newWalk.data));
     }
     const clonedCoordTrain = JSON.parse(JSON.stringify(coordTrain));
-    this.worker[this.actualWorker].postMessage({ walks: walk.data, manchetteWalks: clonedWalk, coordTrain: clonedCoordTrain, runName });
+    this.worker[this.actualWorker].postMessage({
+      walks: walk.data,
+      manchetteWalks: clonedWalk,
+      coordTrain: clonedCoordTrain,
+      runName
+    });
     this.actualWorker += 1;
     if (this.actualWorker > this.maxWorker) {
       this.actualWorker = 0;
@@ -633,6 +618,52 @@ export class HomeComponent implements OnInit {
       borderWidth: 1,
       realTime: true
     });
+    if (this.continueUpdateStopTrains) {
+      const trainsName = this.save.map(train => train.trainName);
+      let counts = {};
+      for (var i = 0; i < trainsName.length; i++) {
+        var num = trainsName[i];
+        counts[num] = counts[num] ? counts[num] + 1 : 1;
+      }
+      let max = 0;
+      var result = Object.keys(counts).map(function(key) {
+        return [key, counts[key]];
+      });
+      for (let row of result) {
+        if (row[1] > max) {
+          max = row[1];
+        }
+      }
+      const trainsForConitnousLine: string[] = [];
+      for (let row of result) {
+        if (row[1] < max - 5) {
+          let trainUpdate: any;
+          for (let train of this.chart.config.data.datasets) {
+            if (train.prediction === false && train.label === row[0]) {
+              trainUpdate = train;
+              break;
+            }
+          }
+          if (trainUpdate) {
+            trainUpdate.data.push({
+              x: this.simTime,
+              y: trainUpdate.data[trainUpdate.data.length - 1],
+              coord: {
+                lat: this.save[this.save.map(element => element.trainName).lastIndexOf(row[0])].lat,
+                lon: this.save[this.save.map(element => element.trainName).lastIndexOf(row[0])].lon
+              }
+            });
+            this.save.push({
+              trainName: row[0],
+              time: this.simTime,
+              lat: this.save[this.save.map(element => element.trainName).lastIndexOf(row[0])].lat,
+              lon: this.save[this.save.map(element => element.trainName).lastIndexOf(row[0])].lon,
+              tmp: false
+            });
+          }
+        }
+      }
+    }
     if (this.onUpdate) {
       return;
     }
@@ -879,7 +910,7 @@ export class HomeComponent implements OnInit {
 
   private initLines() {
     this.data.lines.forEach(line => {
-      const color = "#FFFFFF";
+      const color = '#FFFFFF';
       const {
         traces,
         stations,
