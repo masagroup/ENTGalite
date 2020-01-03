@@ -1,2 +1,2 @@
-py main.py --running "C:\Users\Thierry\Documents\masa\svn-exo\data\exercises\incident_catenaire\marches_by_lines.json"
+py main.py --running "C:\Users\Thierry\Documents\masa\svn-exo\data\exercises\exo2 accident_personne\marches_by_lines.json" --manchettes "C:\Users\Thierry\Documents\masa\svn-exo\data\exercises\exo2 accident_personne\manchettes.json"
 pause

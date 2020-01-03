@@ -426,7 +426,7 @@ export class HomeComponent implements OnInit {
 
   selectManchette(manchette: any) {
     console.log(this.chart);
-    console.log("manchette", this.manchettes);
+    console.log('manchette', this.manchettes);
     this.resetManchettes();
     this.selectedManchette = manchette;
     this.savedStations = JSON.parse(JSON.stringify(this.stations));
