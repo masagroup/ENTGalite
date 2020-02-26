@@ -15,6 +15,7 @@
 }
 
 .chart {
-  height: 80vh;
+  width: 95%;
+  height: 80vh; /* si on met plus, le navigateur vibre à cause de la scrollbar!*/
   border: 1px solid black;
 }

@@ -18,6 +18,7 @@ Chart.pluginService.register({
     ctx.save();
     ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
     ctx.fill();
+	/*
     ctx.rect(
       0,
       ctx.canvas.height - (ctx.canvas.height - chartArea.bottom),
@@ -25,32 +26,10 @@ Chart.pluginService.register({
       ctx.canvas.height - chartArea.bottom
     );
     ctx.fill();
+	*/
     ctx.restore();
   }
 });
-const colorList = [
-  '#6E1E78',
-  '#E05206',
-  '#A1006B',
-  '#FFB612',
-  '#009AA6',
-  '#CD0037',
-  '#0088CE',
-  '#e6194b',
-  '#3cb44b',
-  '#4363d8',
-  '#f58231',
-  '#f032e6',
-  '#9a6324',
-  '#800000',
-  '#4363d8',
-  '#f58231',
-  '#f032e6',
-  '#9a6324',
-  '#800000',
-  '#808000',
-  '#000075'
-];
 
 @Component({
   selector: 'app-home',
@@ -637,8 +616,8 @@ export class HomeComponent implements OnInit {
       }
       const trainsForConitnousLine: string[] = [];
       for (let row of result) {
-        if (row[1] < max - 5) {
-          let trainUpdate: any;
+        if (row[1] < max /*- 5*/) {
+          let trainUpdate = null;
           for (let train of this.chart.config.data.datasets) {
             if (train.prediction === false && train.label === row[0]) {
               trainUpdate = train;
@@ -646,6 +625,7 @@ export class HomeComponent implements OnInit {
             }
           }
           if (trainUpdate) {
+			console.log(trainUpdate);
             trainUpdate.data.push({
               x: this.simTime,
               y: trainUpdate.data[trainUpdate.data.length - 1],
@@ -772,7 +752,7 @@ export class HomeComponent implements OnInit {
             },
             type: 'time',
             time: {
-              unitStepSize: 10,
+              unitStepSize: 30,
               unit: 'minute',
               displayFormats: {
                 minute: 'HH:mm',
@@ -787,12 +767,14 @@ export class HomeComponent implements OnInit {
             },
             ticks: {
               fontColor: 'black',
-              fontSize: 15
+              fontSize: 12
             },
             autoSkip: false,
+			/*
             scaleLabel: {
-              display: true
+              display: false
             }
+			*/
           }
         ],
         yAxes: [
@@ -805,7 +787,11 @@ export class HomeComponent implements OnInit {
               stepSize: 1,
               padding: 50,
               callback: (value: number, index: number) => {
-                return this.displayedStations[value];
+				  var v = this.displayedStations[value];
+				  if(v !== undefined){
+						return v.replace("Bâtiment Voyageurs", "BV");
+				  }
+				  return v;
               }
             }
           }
@@ -877,6 +863,10 @@ export class HomeComponent implements OnInit {
             if (y === this.maxStation) {
               return 'bottom';
             }
+            const dataset = this.chart.config.data.datasets[context.datasetIndex];
+			if (!dataset.prediction){
+				return 'right';
+			}
             return 'left';
           },
           formatter: function(_: any, context: Context | any) {
@@ -888,12 +878,19 @@ export class HomeComponent implements OnInit {
             const dataIndex = context.dataIndex;
             const datasetIndex = context.datasetIndex;
             const dataset = this.chart.config.data.datasets[datasetIndex];
+			/* Affiche dans les cas le label de la line de temps */
             if (dataset.realTime) {
               return true;
             }
-            if (dataset.data[dataIndex].x < min || !dataset.prediction) {
+			/* on affiche jamais le label des marches (prévision ou réelle) à gauche */
+            if (dataset.data[dataIndex].x < min /*|| !dataset.prediction*/) {
               return false;
             }
+			/* on affiche le numéro de la marche réelle que pour la coord courante */
+			if (!dataset.prediction){
+				return dataIndex === len && dataset.data[dataIndex].coord;
+			}
+			
             return dataIndex === 0 || dataIndex === len || !dataset.data[dataIndex].coord;
           }
         }

@@ -1,0 +1,8 @@
+set PYTHONPATH=%HomePath%\Documents\pysword;%HomePath%\Documents\
+%HomePath%\Documents\pysword\bin\python\python.exe main.py ^
+	--root-dir="C:\ProgramData\Masa Group\SWORD Client\bin\_\2" ^
+    --running "..\marches_by_lines.json" ^
+	--manchettes "..\manchettes.json" ^
+	--host 192.168.2.12 ^
+	--sim-port 3138
+pause

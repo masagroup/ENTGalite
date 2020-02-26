@@ -26,12 +26,10 @@ def send_time_to_interface(date: str):
 @eel.expose
 def receive_walks_from_py() -> str:
     """Send walks json to interface """
-    print(WALKS[0:100])
     return WALKS
 
 @eel.expose
 def receive_manchettes_from_py() -> str:
-    print(MANCHETTES)
     return MANCHETTES
 
 class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
@@ -94,15 +92,15 @@ class TestProtocol(TrainProtocol):
     def OnReceived_ControlEndTick(self, msg):
         pass
         super().OnReceived_ControlEndTick(msg)
-        print("heure SIM: {0}".format(self.SIM_datetime))
+        #print("heure SIM: {0}".format(self.SIM_datetime))
 
     def OnUpdate_train(self, train):
         lat, lon = train.position
 
         send_train_to_interface(
             ' '.join([train.name, str(train.speed), str(lat), str(lon)]))
-        print("Train '%s': vitesse = %f, pos = (%f,%f)" % (
-            train.name, train.speed, lat, lon))
+##        print("Train '%s': vitesse = %f, pos = (%f,%f)" % (
+##            train.name, train.speed, lat, lon))
 
 
 class TestFactory(P.SWFactory):
