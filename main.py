@@ -40,9 +40,12 @@ class TrainProtocol(P.SWLoginP, P.TickPrinterMixin, P.UnitMixin):
     """
 
     def is_train(self, unit):
-        return isinstance(
-            unit, self.bdd.pawns.TRAIN_Tgv) or isinstance(
-            unit, self.bdd.pawns.TRAIN_Diesel)
+        return isinstance( unit, (
+                self.bdd.pawns.TRAIN_Tgv, 
+                self.bdd.pawns.TRAIN_Diesel,
+                self.bdd.pawns.TRAIN_Classique,
+                self.bdd.pawns.TRAIN_WSGI,
+                ))
 
     def OnReceived_ControlSendCurrentStateBegin(self, msg):
         self.bdd = self.factory.physical_base
